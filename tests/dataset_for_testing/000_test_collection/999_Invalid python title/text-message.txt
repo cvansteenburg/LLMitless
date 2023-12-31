@@ -1,0 +1,146 @@
+---------- Forwarded message ---------
+From: Innovator's Spotlight <info@venturebeat.com>
+Date: Wed, Dec 6, 2023 at 12:03 PM
+Subject: 🤖 One year in, not just ChatGPT anymore — LLMs are everywhere!
+To: <testy@test.com>
+
+
+View in browser
+<https://mailchi.mp/499f7e060a27/one-year-in-not-just-chatgpt-anymore-llms-are-everywhere?e=ac54f1564a>
+|
+Forward
+<https://us17.forward-to-friend.com/forward?u=f67554569818c29c4c844d121&id=333be89005&e=ac54f1564a>
+
+Wed December 6, 2023
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=8d448da5d4&e=ac54f1564a>
+Innovator Spotlight
+*Note from the editor*:
+
+Welcome to VentureBeat's Innovator Spotlight, where we bring you news on
+the most cutting edge technologies today.
+
+VB digest from this week:
+
+Asato: An AI copilot for CIOs
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=977fb601fa&e=ac54f1564a>
+AI meets materials science
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=a6cd73f8da&e=ac54f1564a>
+New reinforcement learning tool uses human cues to correct mistakes
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=dc3b269bf1&e=ac54f1564a>
+
+And more — keep scrolling!
+
+Other news we're following:
+
+   - Nvidia improves performance with 5X faster AI: With its rival AMD
+   making a big announcement this week on its MI300 flagship GPU for
+   generative AI, Nvidia remains confident that its hardware, software and
+   integrated systems will keep it in the lead. To prove the point, Nvidia
+   announced new benchmarks. Again. (Forbes
+   <https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=9961bb86d0&e=ac54f1564a>
+   )
+   - Elon Musk's X.AI files with the SEC to raise $1 billion in new
+   funding: On the heels of its chatbot Grok, the startup wants new money to
+   "understand the true nature of the universe." (CNBC
+   <https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=1f4b3c5148&e=ac54f1564a>
+   )
+
+Thanks for reading, and continue to follow VB's leading coverage on all
+things AI, big data and analytics!
+
+Taryn Plumb
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=535031a050&e=ac54f1564a>
+(taryn_plumb
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=2fe14576bd&e=ac54f1564a>)
+
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=fb9a45f344&e=ac54f1564a>
+A
+year ago, it was just ChatGPT — now LLMs are everywhere
+
+Since ChatGPT's launch a year ago, several chatbots have cropped up in a
+bid to democratize access to conversational AI capabilities.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=e225fc47d8&e=ac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=7a28a95cc0&e=ac54f1564a>
+[image:
+Like A year ago, it was just ChatGPT — now LLMs are everywhere on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=804e348211&e=ac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=2db7c86259&e=ac54f1564a>
+New,
+open-source AI vision model emerges to take on ChatGPT — but it has issues
+
+The new Nous model comes with SigLIP-400M integration and has been trained
+on a custom dataset enriched with feature calling.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=feb75cc89e&e=ac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=29f602abcf&e=ac54f1564a>
+[image:
+Like New, open-source AI vision model emerges to take on ChatGPT — but it
+has issues on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=152a613dfa&e=ac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=0876fd58e1&e=ac54f1564a>
+IBM
+advances Quantum Computing ambitions with generative AI power for software
+development
+
+IBM announced that its Quantum System Two architecture, which is powered by
+three IBM Quantum Heron processors has begun operations.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=fcaf855d2b&e=ac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=ea9c0b0966&e=ac54f1564a>
+[image:
+Like IBM advances Quantum Computing ambitions with generative AI power for
+software development on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=a5884af456&e=ac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=18e819ca4d&e=ac54f1564a>
+Meta
+AI unveils ‘Seamless’ translator for real-time communication across
+languages
+
+Meta AI researchers have developed a new artificial intelligence model
+called 'Seamless' that enables more natural, real-time translation across
+languages while preserving vocal style and emotion.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=b2812fe35f&e=ac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=fef53e9b51&e=ac54f1564a>
+[image:
+Like Meta AI unveils ‘Seamless’ translator for real-time communication
+across languages on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=e6fb834ced&e=ac54f1564a>
+[image: LinkedIn]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=1250c1dffd&e=ac54f1564a>
+[image: Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=6a58d00637&e=ac54f1564a>
+[image: Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=6868f8f2c8&e=ac54f1564a>
+[image: Website]
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=dd4fd6a8de&e=ac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=257addca4d&e=ac54f1564a>
+
+Want to change how you receive these emails?
+You can update your preferences
+<https://venturebeat.us17.list-manage.com/profile?u=f67554569818c29c4c844d121&id=77ca0f3c9e&e=ac54f1564a&c=333be89005>
+or unsubscribe from this list
+<https://venturebeat.us17.list-manage.com/unsubscribe?u=f67554569818c29c4c844d121&id=77ca0f3c9e&e=ac54f1564a&c=333be89005>
+.
+
+
+500 Sansome St. #404, San Francisco, CA 94111
+
+*Copyright © 2023 VentureBeat, Inc.*. View our privacy policy here
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=6b398bf3fb&e=ac54f1564a>
+.
+<https://venturebeat.us17.list-manage.com/track/click?u=f67554569818c29c4c844d121&id=0e89e40105&e=ac54f1564a>
+
+
+-- 
+*Test User*
+Mobile:  555-555-5555

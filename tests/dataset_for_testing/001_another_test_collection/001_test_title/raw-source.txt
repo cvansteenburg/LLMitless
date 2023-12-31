@@ -1,0 +1,1066 @@
+Received: by p-pm-inboundg02c-aws-useast1c.inbound.postmarkapp.com (Postfix, from userid 996)
+	id 8B9BA453B34; Mon, 11 Dec 2023 07:13:46 +0000 (UTC)
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	p-pm-inboundg02c-aws-useast1c
+X-Spam-Status: No
+X-Spam-Score: -0.1
+X-Spam-Tests: DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FROM,
+	HTML_IMAGE_RATIO_02,HTML_MESSAGE,RCVD_IN_DNSWL_NONE,RCVD_IN_MSPIKE_H2,
+	RCVD_IN_ZEN_BLOCKED_OPENDNS,SPF_HELO_NONE,SPF_PASS,T_SCC_BODY_TEXT_LINE,
+	URIBL_DBL_BLOCKED_OPENDNS,URIBL_ZEN_BLOCKED_OPENDNS
+Received-SPF: pass (gmail.com ... _spf.google.com: Sender is authorized to use 'testy@test.com' in 'mfrom' identity (mechanism 'include:_netblocks.google.com' matched)) receiver=p-pm-inboundg02c-aws-useast1c; identity=mailfrom; envelope-from="testy@test.com"; helo=mail-oi1-f180.google.com; client-ip=209.85.167.180
+Received: from mail-oi1-f180.google.com (mail-oi1-f180.google.com [209.85.167.180])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by p-pm-inboundg02c-aws-useast1c.inbound.postmarkapp.com (Postfix) with ESMTPS id 9223F404FD0
+	for <hi@brf.gg>; Mon, 11 Dec 2023 07:13:45 +0000 (UTC)
+Received: by mail-oi1-f180.google.com with SMTP id 5614622812f47-3b9e2d50e61so2717029b6e.2
+        for <hi@brf.gg>; Sun, 10 Dec 2023 23:13:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1702278824; x=1702883624; darn=brf.gg;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=MRH5HKTg6ZXe/zd4ckEz3jsNKWTEorhsd5mV0sFkGOA=;
+        b=eKiQg6OIHh2cVsMyVafhhkSUvF/ZwJEoRZQ57SEU8MGdeR2v1yy7AuJKJ36/FlRyYw
+         BlAOXSwAr7k8MXr7z5ToJE5u7PQ7lWT9NqUfg4d+p3Ua6Eq6+VAEpJTT2yU3/mDdhoZu
+         zi5F3FkfEuuiieRdNNMBKEBIqss81setgB+hJ7rVS8HEoTlepTaC4IndySLphCcA/hkP
+         BBP0l0Ni46dzfoELRDD1kVfrKjdjWebqAAQbfBy6QAxqYZetpyitwkfuoOYC/gFEWbq3
+         VEAJVuolFx3tXub7IA7b+Gj2ZiOFbeD41WDG4LZ34KJYv7cyf8x0i0WbIMPa+Jh91lRr
+         XN9A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1702278824; x=1702883624;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=MRH5HKTg6ZXe/zd4ckEz3jsNKWTEorhsd5mV0sFkGOA=;
+        b=Fv2Te1o1CI/5sHeqy0mx5CbdmT4YP8gJTJ2+ug4j9I4XsRawawuF6osWpx0H0wAq1j
+         33YVDZxeqr8kKc02knixYmEbi/eVi7tttyalyyOkkH8Ft2lH+923ZWaXVSBA3/N6sRMJ
+         iS9rMAbNVl7Rya+paGuEg8rnXrZKcr9wdTSCZXtOIks2GpTTJzGqJFzPtndB+awlNqhU
+         BsB2rqZzRn19XHiDO7g+Qni90FSF2fHpXfBQssZyvlxO4vdZsgubBqiyf0muO+Eg3Mi4
+         I5srvEbYelUTRsRlFhIohsqLxvqsun8HLpHnkxGgE2NALFxgzz4U3riIP8NKMH+ewN4J
+         uB7g==
+X-Gm-Message-State: AOJu0YwLjxj1wBqxIs1aGDQfY/+bPsgRGuV6/rlkZJFv0LRSt9gCcUMw
+	oRq1n8jUwq/4Vv9G0PNl332MX+Co525JS565vCudBy2/
+X-Google-Smtp-Source: AGHT+IFqH00bvlAQpSl25VE9H++c30um6nvNQtZ+rDo/vAMMFmNKkCxjh4MreRUs8dJLFsIxJ62aAKMleCVhrwHg3Ug=
+X-Received: by 2002:a05:6808:2125:b0:3b8:b063:9b66 with SMTP id
+ r37-20020a056808212500b003b8b0639b66mr4893865oiw.88.1702278824331; Sun, 10
+ Dec 2023 23:13:44 -0800 (PST)
+MIME-Version: 1.0
+References: <f67554569818c29c4c844d121.ac54f1564a.20231206200258.333be89005.666b93d6@mail21.atl261.mcdlv.net>
+In-Reply-To: <f67554569818c29c4c844d121.ac54f1564a.20231206200258.333be89005.666b93d6@mail21.atl261.mcdlv.net>
+From: Test User <testy@test.com>
+Date: Sun, 10 Dec 2023 23:13:27 -0800
+Message-ID: <CANgrOuAvjh7-W5P6t8Nfr1HBBVQdArvcmPV2EoyVdBgT13Wz5A@mail.gmail.com>
+Subject: =?UTF-8?Q?Fwd=3A_=F0=9F=A4=96_One_year_in=2C_not_just_ChatGPT_anymore_=E2=80=94_?=
+	=?UTF-8?Q?LLMs_are_everywhere=21?=
+To: hi@brf.gg
+Content-Type: multipart/alternative; boundary="000000000000a20e1f060c36ac73"
+
+--000000000000a20e1f060c36ac73
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+---------- Forwarded message ---------
+From: Innovator's Spotlight <info@venturebeat.com>
+Date: Wed, Dec 6, 2023 at 12:03=E2=80=AFPM
+Subject: =F0=9F=A4=96 One year in, not just ChatGPT anymore =E2=80=94 LLMs =
+are everywhere!
+To: <testy@test.com>
+
+
+View in browser
+<https://mailchi.mp/499f7e060a27/one-year-in-not-just-chatgpt-anymore-llms-=
+are-everywhere?e=3Dac54f1564a>
+|
+Forward
+<https://us17.forward-to-friend.com/forward?u=3Df67554569818c29c4c844d121&i=
+d=3D333be89005&e=3Dac54f1564a>
+
+Wed December 6, 2023
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D8d448da5d4&e=3Dac54f1564a>
+Innovator Spotlight
+*Note from the editor*:
+
+Welcome to VentureBeat's Innovator Spotlight, where we bring you news on
+the most cutting edge technologies today.
+
+VB digest from this week:
+
+Asato: An AI copilot for CIOs
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D977fb601fa&e=3Dac54f1564a>
+AI meets materials science
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Da6cd73f8da&e=3Dac54f1564a>
+New reinforcement learning tool uses human cues to correct mistakes
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Ddc3b269bf1&e=3Dac54f1564a>
+
+And more =E2=80=94 keep scrolling!
+
+Other news we're following:
+
+   - Nvidia improves performance with 5X faster AI: With its rival AMD
+   making a big announcement this week on its MI300 flagship GPU for
+   generative AI, Nvidia remains confident that its hardware, software and
+   integrated systems will keep it in the lead. To prove the point, Nvidia
+   announced new benchmarks. Again. (Forbes
+   <https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c2=
+9c4c844d121&id=3D9961bb86d0&e=3Dac54f1564a>
+   )
+   - Elon Musk's X.AI files with the SEC to raise $1 billion in new
+   funding: On the heels of its chatbot Grok, the startup wants new money t=
+o
+   "understand the true nature of the universe." (CNBC
+   <https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c2=
+9c4c844d121&id=3D1f4b3c5148&e=3Dac54f1564a>
+   )
+
+Thanks for reading, and continue to follow VB's leading coverage on all
+things AI, big data and analytics!
+
+Taryn Plumb
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D535031a050&e=3Dac54f1564a>
+(taryn_plumb
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D2fe14576bd&e=3Dac54f1564a>)
+
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Dfb9a45f344&e=3Dac54f1564a>
+A
+year ago, it was just ChatGPT =E2=80=94 now LLMs are everywhere
+
+Since ChatGPT's launch a year ago, several chatbots have cropped up in a
+bid to democratize access to conversational AI capabilities.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3De225fc47d8&e=3Dac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D7a28a95cc0&e=3Dac54f1564a>
+[image:
+Like A year ago, it was just ChatGPT =E2=80=94 now LLMs are everywhere on F=
+acebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D804e348211&e=3Dac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D2db7c86259&e=3Dac54f1564a>
+New,
+open-source AI vision model emerges to take on ChatGPT =E2=80=94 but it has=
+ issues
+
+The new Nous model comes with SigLIP-400M integration and has been trained
+on a custom dataset enriched with feature calling.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Dfeb75cc89e&e=3Dac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D29f602abcf&e=3Dac54f1564a>
+[image:
+Like New, open-source AI vision model emerges to take on ChatGPT =E2=80=94 =
+but it
+has issues on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D152a613dfa&e=3Dac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D0876fd58e1&e=3Dac54f1564a>
+IBM
+advances Quantum Computing ambitions with generative AI power for software
+development
+
+IBM announced that its Quantum System Two architecture, which is powered by
+three IBM Quantum Heron processors has begun operations.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Dfcaf855d2b&e=3Dac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Dea9c0b0966&e=3Dac54f1564a>
+[image:
+Like IBM advances Quantum Computing ambitions with generative AI power for
+software development on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Da5884af456&e=3Dac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D18e819ca4d&e=3Dac54f1564a>
+Meta
+AI unveils =E2=80=98Seamless=E2=80=99 translator for real-time communicatio=
+n across
+languages
+
+Meta AI researchers have developed a new artificial intelligence model
+called 'Seamless' that enables more natural, real-time translation across
+languages while preserving vocal style and emotion.
+
+Read more
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Db2812fe35f&e=3Dac54f1564a>
+[image: share on Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Dfef53e9b51&e=3Dac54f1564a>
+[image:
+Like Meta AI unveils =E2=80=98Seamless=E2=80=99 translator for real-time co=
+mmunication
+across languages on Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3De6fb834ced&e=3Dac54f1564a>
+[image: LinkedIn]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D1250c1dffd&e=3Dac54f1564a>
+[image: Twitter]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D6a58d00637&e=3Dac54f1564a>
+[image: Facebook]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D6868f8f2c8&e=3Dac54f1564a>
+[image: Website]
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3Ddd4fd6a8de&e=3Dac54f1564a>
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D257addca4d&e=3Dac54f1564a>
+
+Want to change how you receive these emails?
+You can update your preferences
+<https://venturebeat.us17.list-manage.com/profile?u=3Df67554569818c29c4c844=
+d121&id=3D77ca0f3c9e&e=3Dac54f1564a&c=3D333be89005>
+or unsubscribe from this list
+<https://venturebeat.us17.list-manage.com/unsubscribe?u=3Df67554569818c29c4=
+c844d121&id=3D77ca0f3c9e&e=3Dac54f1564a&c=3D333be89005>
+.
+
+
+500 Sansome St. #404, San Francisco, CA 94111
+
+*Copyright =C2=A9 2023 VentureBeat, Inc.*. View our privacy policy here
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D6b398bf3fb&e=3Dac54f1564a>
+.
+<https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&id=3D0e89e40105&e=3Dac54f1564a>
+
+
+--=20
+*Test User*
+Mobile:  555-555-5555
+
+--000000000000a20e1f060c36ac73
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><br><div class=3D"gmail_quote"><div dir=3D"ltr" class=
+=3D"gmail_attr">---------- Forwarded message ---------<br>From: <strong cla=
+ss=3D"gmail_sendername" dir=3D"auto">Innovator&#39;s Spotlight</strong> <sp=
+an dir=3D"auto">&lt;<a href=3D"mailto:info@venturebeat.com">info@venturebea=
+t.com</a>&gt;</span><br>Date: Wed, Dec 6, 2023 at 12:03=E2=80=AFPM<br>Subje=
+ct: =F0=9F=A4=96 One year in, not just ChatGPT anymore =E2=80=94 LLMs are e=
+verywhere!<br>To:  &lt;<a href=3D"mailto:testy@test.com">cvansteen=
+burg@gmail.com</a>&gt;<br></div><br><br><div class=3D"msg-63357269262517566=
+09"><u></u>
+
+   =20
+       =20
+       =20
+       =20
+       =20
+       =20
+       =20
+
+   =20
+    <div style=3D"height:100%;margin:0;padding:0;width:100%;background-colo=
+r:#fafafa">
+       =20
+        <center>
+            <table align=3D"center" border=3D"0" cellpadding=3D"0" cellspac=
+ing=3D"0" height=3D"100%" width=3D"100%" id=3D"m_-6335726926251756609bodyTa=
+ble" style=3D"border-collapse:collapse;height:100%;margin:0;padding:0;width=
+:100%;background-color:#fafafa">
+                <tbody><tr>
+                    <td align=3D"center" valign=3D"top" id=3D"m_-6335726926=
+251756609bodyCell" style=3D"height:100%;margin:0;padding:10px;width:100%;bo=
+rder-top:0">
+                       =20
+                       =20
+                        <table border=3D"0" cellpadding=3D"0" cellspacing=
+=3D"0" width=3D"100%" class=3D"m_-6335726926251756609templateContainer" sty=
+le=3D"border-collapse:collapse;border:0;max-width:600px!important">
+                            <tbody><tr>
+                                <td valign=3D"top" id=3D"m_-633572692625175=
+6609templatePreheader" style=3D"background:#000000 none no-repeat center/co=
+ver;background-color:#000000;background-image:none;background-repeat:no-rep=
+eat;background-position:center;background-size:cover;border-top:0;border-bo=
+ttom:0;padding-top:9px;padding-bottom:9px"><table border=3D"0" cellpadding=
+=3D"0" cellspacing=3D"0" width=3D"100%" style=3D"min-width:100%;border-coll=
+apse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top" style=3D"padding-top:9px">
+              =09
+		=09
+			=09
+                <table align=3D"left" border=3D"0" cellpadding=3D"0" cellsp=
+acing=3D"0" style=3D"max-width:100%;min-width:100%;border-collapse:collapse=
+" width=3D"100%" class=3D"m_-6335726926251756609mcnTextContentContainer">
+                    <tbody><tr>
+
+                        <td valign=3D"top" class=3D"m_-6335726926251756609m=
+cnTextContent" style=3D"padding:0px 18px 9px;font-family:Roboto,&quot;Helve=
+tica Neue&quot;,Helvetica,Arial,sans-serif;text-align:center;word-break:bre=
+ak-word;color:#ffffff;font-size:12px;line-height:150%">
+
+                            <a href=3D"https://mailchi.mp/499f7e060a27/one-=
+year-in-not-just-chatgpt-anymore-llms-are-everywhere?e=3Dac54f1564a" style=
+=3D"color:#ffffff;font-weight:normal;text-decoration:underline" target=3D"_=
+blank">View in browser</a>=C2=A0| <a href=3D"https://us17.forward-to-friend=
+.com/forward?u=3Df67554569818c29c4c844d121&amp;id=3D333be89005&amp;e=3Dac54=
+f1564a" style=3D"color:#ffffff;font-weight:normal;text-decoration:underline=
+" target=3D"_blank">Forward</a>
+                        </td>
+                    </tr>
+                </tbody></table>
+			=09
+
+			=09
+            </td>
+        </tr>
+    </tbody>
+</table></td>
+                            </tr>
+                            <tr>
+                                <td valign=3D"top" id=3D"m_-633572692625175=
+6609templateHeader" style=3D"background:#ffffff none no-repeat center/cover=
+;background-color:#ffffff;background-image:none;background-repeat:no-repeat=
+;background-position:center;background-size:cover;border-top:0;border-botto=
+m:0;padding-top:9px;padding-bottom:0"><table border=3D"0" cellpadding=3D"0"=
+ cellspacing=3D"0" width=3D"100%" style=3D"border-collapse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top">
+                <div class=3D"m_-6335726926251756609mcnTextContent" style=
+=3D"padding-left:18px;padding-right:18px;word-break:break-word;color:#20202=
+0;font-family:&#39;Roboto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,san=
+s-serif;font-size:14px;line-height:150%;text-align:left">
+	<table align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" sty=
+le=3D"max-width:100%;min-width:100%;border-collapse:collapse" width=3D"100%=
+">
+    	<tbody><tr>
+        	<td>Wed December 6, 2023</td>
+            <td style=3D"text-align:right">
+            	<a href=3D"https://venturebeat.us17.list-manage.com/track/clic=
+k?u=3Df67554569818c29c4c844d121&amp;id=3D8d448da5d4&amp;e=3Dac54f1564a" sty=
+le=3D"color:#007c89;font-weight:normal;text-decoration:underline" target=3D=
+"_blank">
+            		<img src=3D"https://mcusercontent.com/f67554569818c29c4c844d1=
+21/images/f5fe8002-57a3-ba79-d9ad-43ea18bfbfa6.png" style=3D"max-height:25p=
+x;width:auto;border:0;height:auto!important;outline:none;text-decoration:no=
+ne;max-width:100%">
+                </a>
+                </td>
+        </tr>
+    </tbody></table>
+</div>
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" style=3D"border-collapse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top">
+                <div class=3D"m_-6335726926251756609mcnTextContent" style=
+=3D"word-break:break-word;color:#202020;font-family:&#39;Roboto&#39;,&#39;H=
+elvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:14px;line-height:15=
+0%;text-align:left">
+
+</div>
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" style=3D"min-width:100%;border-collapse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top" style=3D"padding-top:9px">
+              =09
+		=09
+			=09
+                <table align=3D"left" border=3D"0" cellpadding=3D"0" cellsp=
+acing=3D"0" style=3D"max-width:100%;min-width:100%;border-collapse:collapse=
+" width=3D"100%" class=3D"m_-6335726926251756609mcnTextContentContainer">
+                    <tbody><tr>
+
+                        <td valign=3D"top" class=3D"m_-6335726926251756609m=
+cnTextContent" style=3D"padding-top:0;padding-right:18px;padding-bottom:9px=
+;padding-left:18px;word-break:break-word;color:#202020;font-family:&#39;Rob=
+oto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:14px=
+;line-height:150%;text-align:left">
+
+                            <h1 style=3D"text-align:center;display:block;ma=
+rgin:0;padding:0;color:#202020;font-family:&#39;Open Sans&#39;,&#39;Helveti=
+ca Neue&#39;,Helvetica,Arial,sans-serif;font-size:26px;font-style:normal;fo=
+nt-weight:bold;line-height:125%;letter-spacing:normal">Innovator Spotlight<=
+/h1>
+<br>
+<strong>Note from the editor</strong>:=C2=A0<br>
+<br>
+Welcome to VentureBeat&#39;s Innovator Spotlight, where we bring you news o=
+n the most cutting edge technologies today.=C2=A0<br>
+<br>
+VB digest from this week:=C2=A0<br>
+<br>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3D977fb601fa&amp;e=3Dac54f1564a" style=3D"color:#=
+007c89;font-weight:normal;text-decoration:underline" target=3D"_blank">Asat=
+o: An AI copilot for CIOs</a><br>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3Da6cd73f8da&amp;e=3Dac54f1564a" style=3D"color:#=
+007c89;font-weight:normal;text-decoration:underline" target=3D"_blank">AI m=
+eets materials science</a><br>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3Ddc3b269bf1&amp;e=3Dac54f1564a" style=3D"color:#=
+007c89;font-weight:normal;text-decoration:underline" target=3D"_blank">New =
+reinforcement learning tool uses human cues to correct mistakes</a><br>
+<br>
+And more =E2=80=94 keep scrolling!<br>
+<br>
+Other news we&#39;re following:=C2=A0
+<ul>
+	<li>Nvidia improves performance with 5X faster AI: With its rival AMD maki=
+ng a big announcement this week on its MI300 flagship GPU for generative AI=
+, Nvidia remains confident that its hardware, software and integrated syste=
+ms will keep it in the lead. To prove the point, Nvidia announced new bench=
+marks. Again. (<a href=3D"https://venturebeat.us17.list-manage.com/track/cl=
+ick?u=3Df67554569818c29c4c844d121&amp;id=3D9961bb86d0&amp;e=3Dac54f1564a" s=
+tyle=3D"color:#007c89;font-weight:normal;text-decoration:underline" target=
+=3D"_blank">Forbes</a>)</li>
+	<li>Elon Musk&#39;s <a href=3D"http://X.AI" target=3D"_blank">X.AI</a> fil=
+es with the SEC to raise $1 billion in new funding: On the heels of its cha=
+tbot Grok, the startup wants new money to &quot;understand the true nature =
+of the universe.&quot; (<a href=3D"https://venturebeat.us17.list-manage.com=
+/track/click?u=3Df67554569818c29c4c844d121&amp;id=3D1f4b3c5148&amp;e=3Dac54=
+f1564a" style=3D"color:#007c89;font-weight:normal;text-decoration:underline=
+" target=3D"_blank">CNBC</a>)</li>
+</ul>
+Thanks for reading, and continue to follow VB&#39;s leading coverage on all=
+ things AI, big data and analytics!<br>
+<br>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3D535031a050&amp;e=3Dac54f1564a" style=3D"color:#=
+007c89;font-weight:normal;text-decoration:underline" target=3D"_blank">Tary=
+n Plumb</a> (<a href=3D"https://venturebeat.us17.list-manage.com/track/clic=
+k?u=3Df67554569818c29c4c844d121&amp;id=3D2fe14576bd&amp;e=3Dac54f1564a" sty=
+le=3D"color:#007c89;font-weight:normal;text-decoration:underline" target=3D=
+"_blank">taryn_plumb</a>)
+                        </td>
+                    </tr>
+                </tbody></table>
+			=09
+
+			=09
+            </td>
+        </tr>
+    </tbody>
+</table></td>
+                            </tr>
+                            <tr>
+                                <td valign=3D"top" id=3D"m_-633572692625175=
+6609templateBody" style=3D"background:#ffffff none no-repeat center/cover;b=
+ackground-color:#ffffff;background-image:none;background-repeat:no-repeat;b=
+ackground-position:center;background-size:cover;border-top:0;border-bottom:=
+2px solid #eaeaea;padding-top:0;padding-bottom:9px"><table border=3D"0" cel=
+lpadding=3D"0" cellspacing=3D"0" width=3D"100%" class=3D"m_-633572692625175=
+6609mcnDividerBlock" style=3D"min-width:100%;border-collapse:collapse;table=
+-layout:fixed!important">
+    <tbody>
+        <tr>
+            <td style=3D"min-width:100%;padding:18px">
+                <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"min-width:100%;border-top:2px solid #eaeaea;border-col=
+lapse:collapse">
+                    <tbody><tr>
+                        <td>
+                            <span></span>
+                        </td>
+                    </tr>
+                </tbody></table>
+
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" style=3D"min-width:100%;border-collapse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top" style=3D"padding-top:9px">
+              =09
+		=09
+			=09
+                <table align=3D"left" border=3D"0" cellpadding=3D"0" cellsp=
+acing=3D"0" style=3D"max-width:100%;min-width:100%;border-collapse:collapse=
+" width=3D"100%" class=3D"m_-6335726926251756609mcnTextContentContainer">
+                    <tbody><tr>
+
+                        <td valign=3D"top" class=3D"m_-6335726926251756609m=
+cnTextContent" style=3D"padding-top:0;padding-right:18px;padding-bottom:9px=
+;padding-left:18px;word-break:break-word;color:#000000;font-family:&#39;Rob=
+oto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px=
+;line-height:150%;text-align:left">
+
+                           =20
+  <a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df6755=
+4569818c29c4c844d121&amp;id=3Dfb9a45f344&amp;e=3Dac54f1564a" style=3D"color=
+:#000000;font-weight:normal;text-decoration:underline" target=3D"_blank"><i=
+mg src=3D"https://venturebeat.com/wp-content/uploads/2023/11/multiple_cute_=
+robots_in_a_race-e1701364254158.jpg?fit=3D750%2C375&amp;strip=3Dall" height=
+=3D"375" width=3D"750" style=3D"height:375;width:750"></a>
+<h2 style=3D"display:block;margin:0;padding:0;color:#202020;font-family:&#3=
+9;Roboto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size=
+:22px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:no=
+rmal;text-align:left"><a style=3D"font-weight:bold;text-decoration:none;col=
+or:#000000">A year ago, it was just ChatGPT =E2=80=94 now LLMs are everywhe=
+re</a></h2>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left">Since ChatGPT&#39;s launch a year ago, severa=
+l chatbots have cropped up in a bid to democratize access to conversational=
+ AI capabilities.</p>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><a href=3D"https://venturebeat.us17.list-mana=
+ge.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3De225fc47d8&amp;e=
+=3Dac54f1564a" style=3D"background-color:black;color:white;text-decoration:=
+none;padding:4px 12px;font-weight:normal" target=3D"_blank">Read more</a></=
+p>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3D7a28a95cc0&amp;e=3Dac54f1564a" target=3D"_blank=
+"><img src=3D"http://cdn-images.mailchimp.com/social_connect_tweet.png" bor=
+der=3D"0" width=3D"55" height=3D"20" style=3D"display:inline" alt=3D"share =
+on Twitter"></a> <a href=3D"https://venturebeat.us17.list-manage.com/track/=
+click?u=3Df67554569818c29c4c844d121&amp;id=3D804e348211&amp;e=3Dac54f1564a"=
+ title=3D"Like A year ago, it was just ChatGPT =E2=80=94 now LLMs are every=
+where on Facebook" rel=3D"socialproxy" id=3D"m_-6335726926251756609fblike-8=
+75c1fc2" target=3D"_blank"><img src=3D"http://cdn-images.mailchimp.com/fb/l=
+ike.gif" border=3D"0" alt=3D"Like A year ago, it was just ChatGPT =E2=80=94=
+ now LLMs are everywhere on Facebook" height=3D"20" width=3D"48" style=3D"d=
+isplay:inline"></a>
+                        </td>
+                    </tr>
+                </tbody></table>
+			=09
+
+			=09
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" class=3D"m_-6335726926251756609mcnDividerBlock" style=3D"min-width:100%=
+;border-collapse:collapse;table-layout:fixed!important">
+    <tbody>
+        <tr>
+            <td style=3D"min-width:100%;padding:18px">
+                <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"min-width:100%;border-top:2px solid #eaeaea;border-col=
+lapse:collapse">
+                    <tbody><tr>
+                        <td>
+                            <span></span>
+                        </td>
+                    </tr>
+                </tbody></table>
+
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" style=3D"min-width:100%;border-collapse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top" style=3D"padding-top:9px">
+              =09
+		=09
+			=09
+                <table align=3D"left" border=3D"0" cellpadding=3D"0" cellsp=
+acing=3D"0" style=3D"max-width:100%;min-width:100%;border-collapse:collapse=
+" width=3D"100%" class=3D"m_-6335726926251756609mcnTextContentContainer">
+                    <tbody><tr>
+
+                        <td valign=3D"top" class=3D"m_-6335726926251756609m=
+cnTextContent" style=3D"padding-top:0;padding-right:18px;padding-bottom:9px=
+;padding-left:18px;word-break:break-word;color:#000000;font-family:&#39;Rob=
+oto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px=
+;line-height:150%;text-align:left">
+
+                              <a href=3D"https://venturebeat.us17.list-mana=
+ge.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3D2db7c86259&amp;e=
+=3Dac54f1564a" style=3D"color:#000000;font-weight:normal;text-decoration:un=
+derline" target=3D"_blank"><img src=3D"https://venturebeat.com/wp-content/u=
+ploads/2023/12/hermes_god.jpg?fit=3D750%2C469&amp;strip=3Dall" height=3D"46=
+9" width=3D"750" style=3D"height:469;width:750"></a>
+
+<h2 style=3D"display:block;margin:0;padding:0;color:#202020;font-family:&#3=
+9;Roboto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size=
+:22px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:no=
+rmal;text-align:left"><a style=3D"font-weight:bold;text-decoration:none;col=
+or:#000000">New, open-source AI vision model emerges to take on ChatGPT =E2=
+=80=94 but it has issues</a></h2>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><span style=3D"color:#555555">The new Nous mo=
+del comes with SigLIP-400M integration and has been trained on a custom dat=
+aset enriched with feature calling.</span></p>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><a href=3D"https://venturebeat.us17.list-mana=
+ge.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3Dfeb75cc89e&amp;e=
+=3Dac54f1564a" style=3D"background-color:black;color:white;text-decoration:=
+none;padding:4px 12px;font-weight:normal" target=3D"_blank">Read more</a></=
+p>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3D29f602abcf&amp;e=3Dac54f1564a" target=3D"_blank=
+"><img src=3D"http://cdn-images.mailchimp.com/social_connect_tweet.png" bor=
+der=3D"0" width=3D"55" height=3D"20" style=3D"display:inline" alt=3D"share =
+on Twitter"></a> <a href=3D"https://venturebeat.us17.list-manage.com/track/=
+click?u=3Df67554569818c29c4c844d121&amp;id=3D152a613dfa&amp;e=3Dac54f1564a"=
+ title=3D"Like New, open-source AI vision model emerges to take on ChatGPT =
+=E2=80=94 but it has issues on Facebook" rel=3D"socialproxy" id=3D"m_-63357=
+26926251756609fblike-757c32c5" target=3D"_blank"><img src=3D"http://cdn-ima=
+ges.mailchimp.com/fb/like.gif" border=3D"0" alt=3D"Like New, open-source AI=
+ vision model emerges to take on ChatGPT =E2=80=94 but it has issues on Fac=
+ebook" height=3D"20" width=3D"48" style=3D"display:inline"></a>  <a href=3D=
+"https://venturebeat.us17.list-manage.com/track/click?u=3Df67554569818c29c4=
+c844d121&amp;id=3D0876fd58e1&amp;e=3Dac54f1564a" style=3D"color:#000000;fon=
+t-weight:normal;text-decoration:underline" target=3D"_blank"><img src=3D"ht=
+tps://venturebeat.com/wp-content/uploads/2023/12/quantum-system-two.jpg?fit=
+=3D750%2C563&amp;strip=3Dall" height=3D"563" width=3D"750" style=3D"height:=
+563;width:750"></a>
+
+<h2 style=3D"display:block;margin:0;padding:0;color:#202020;font-family:&#3=
+9;Roboto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size=
+:22px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:no=
+rmal;text-align:left"><a style=3D"font-weight:bold;text-decoration:none;col=
+or:#000000">IBM advances Quantum Computing ambitions with generative AI pow=
+er for software development</a></h2>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><span style=3D"color:#555555">IBM announced t=
+hat its Quantum System Two architecture, which is powered by three IBM Quan=
+tum Heron processors has begun operations.</span></p>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><a href=3D"https://venturebeat.us17.list-mana=
+ge.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3Dfcaf855d2b&amp;e=
+=3Dac54f1564a" style=3D"background-color:black;color:white;text-decoration:=
+none;padding:4px 12px;font-weight:normal" target=3D"_blank">Read more</a></=
+p>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3Dea9c0b0966&amp;e=3Dac54f1564a" target=3D"_blank=
+"><img src=3D"http://cdn-images.mailchimp.com/social_connect_tweet.png" bor=
+der=3D"0" width=3D"55" height=3D"20" style=3D"display:inline" alt=3D"share =
+on Twitter"></a> <a href=3D"https://venturebeat.us17.list-manage.com/track/=
+click?u=3Df67554569818c29c4c844d121&amp;id=3Da5884af456&amp;e=3Dac54f1564a"=
+ title=3D"Like IBM advances Quantum Computing ambitions with generative AI =
+power for software development on Facebook" rel=3D"socialproxy" id=3D"m_-63=
+35726926251756609fblike-ef1ffb68" target=3D"_blank"><img src=3D"http://cdn-=
+images.mailchimp.com/fb/like.gif" border=3D"0" alt=3D"Like IBM advances Qua=
+ntum Computing ambitions with generative AI power for software development =
+on Facebook" height=3D"20" width=3D"48" style=3D"display:inline"></a>  <a h=
+ref=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df6755456981=
+8c29c4c844d121&amp;id=3D18e819ca4d&amp;e=3Dac54f1564a" style=3D"color:#0000=
+00;font-weight:normal;text-decoration:underline" target=3D"_blank"><img src=
+=3D"https://venturebeat.com/wp-content/uploads/2023/12/nuneybits_Abstract_p=
+ainting_of_two_people_with_speech_bubbles_c_b2457dfd-af1e-4d7f-b81d-70bef4a=
+9307f.webp?fit=3D750%2C600&amp;strip=3Dall" height=3D"600" width=3D"750" st=
+yle=3D"height:600;width:750"></a>
+
+<h2 style=3D"display:block;margin:0;padding:0;color:#202020;font-family:&#3=
+9;Roboto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size=
+:22px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:no=
+rmal;text-align:left"><a style=3D"font-weight:bold;text-decoration:none;col=
+or:#000000">Meta AI unveils =E2=80=98Seamless=E2=80=99 translator for real-=
+time communication across languages</a></h2>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><span style=3D"color:#555555">Meta AI researc=
+hers have developed a new artificial intelligence model called &#39;Seamles=
+s&#39; that enables more natural, real-time translation across languages wh=
+ile preserving vocal style and emotion.</span></p>
+
+<p style=3D"margin:10px 0;padding:0;color:#000000;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:16px;line=
+-height:150%;text-align:left"><a href=3D"https://venturebeat.us17.list-mana=
+ge.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3Db2812fe35f&amp;e=
+=3Dac54f1564a" style=3D"background-color:black;color:white;text-decoration:=
+none;padding:4px 12px;font-weight:normal" target=3D"_blank">Read more</a></=
+p>
+<a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=3Df675545=
+69818c29c4c844d121&amp;id=3Dfef53e9b51&amp;e=3Dac54f1564a" target=3D"_blank=
+"><img src=3D"http://cdn-images.mailchimp.com/social_connect_tweet.png" bor=
+der=3D"0" width=3D"55" height=3D"20" style=3D"display:inline" alt=3D"share =
+on Twitter"></a> <a href=3D"https://venturebeat.us17.list-manage.com/track/=
+click?u=3Df67554569818c29c4c844d121&amp;id=3De6fb834ced&amp;e=3Dac54f1564a"=
+ title=3D"Like Meta AI unveils =E2=80=98Seamless=E2=80=99 translator for re=
+al-time communication across languages on Facebook" rel=3D"socialproxy" id=
+=3D"m_-6335726926251756609fblike-dd0ac9c7" target=3D"_blank"><img src=3D"ht=
+tp://cdn-images.mailchimp.com/fb/like.gif" border=3D"0" alt=3D"Like Meta AI=
+ unveils =E2=80=98Seamless=E2=80=99 translator for real-time communication =
+across languages on Facebook" height=3D"20" width=3D"48" style=3D"display:i=
+nline"></a>
+                        </td>
+                    </tr>
+                </tbody></table>
+			=09
+
+			=09
+            </td>
+        </tr>
+    </tbody>
+</table></td>
+                            </tr>
+                            <tr>
+                                <td valign=3D"top" id=3D"m_-633572692625175=
+6609templateFooter" style=3D"background:#fafafa none no-repeat center/cover=
+;background-color:#fafafa;background-image:none;background-repeat:no-repeat=
+;background-position:center;background-size:cover;border-top:0;border-botto=
+m:0;padding-top:9px;padding-bottom:9px"><table border=3D"0" cellpadding=3D"=
+0" cellspacing=3D"0" width=3D"100%" style=3D"min-width:100%;border-collapse=
+:collapse">
+    <tbody>
+        <tr>
+            <td align=3D"center" valign=3D"top" style=3D"padding:9px">
+                <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"min-width:100%;border-collapse:collapse">
+    <tbody><tr>
+        <td align=3D"center" style=3D"padding-left:9px;padding-right:9px">
+            <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=
+=3D"100%" style=3D"min-width:100%;border-collapse:collapse">
+                <tbody><tr>
+                    <td align=3D"center" valign=3D"top" style=3D"padding-to=
+p:9px;padding-right:9px;padding-left:9px">
+                        <table align=3D"center" border=3D"0" cellpadding=3D=
+"0" cellspacing=3D"0" style=3D"border-collapse:collapse">
+                            <tbody><tr>
+                                <td align=3D"center" valign=3D"top">
+                                   =20
+
+                                       =20
+
+
+                                            <table align=3D"left" border=3D=
+"0" cellpadding=3D"0" cellspacing=3D"0" style=3D"display:inline;border-coll=
+apse:collapse">
+                                                <tbody><tr>
+                                                    <td valign=3D"top" styl=
+e=3D"padding-right:10px;padding-bottom:9px">
+                                                        <table border=3D"0"=
+ cellpadding=3D"0" cellspacing=3D"0" width=3D"100%" style=3D"border-collaps=
+e:collapse">
+                                                            <tbody><tr>
+                                                                <td align=
+=3D"left" valign=3D"middle" style=3D"padding-top:5px;padding-right:10px;pad=
+ding-bottom:5px;padding-left:9px">
+                                                                    <table =
+align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"" =
+style=3D"border-collapse:collapse">
+                                                                        <tb=
+ody><tr>
+
+                                                                           =
+     <td align=3D"center" valign=3D"middle" width=3D"24">
+                                                                           =
+         <a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=
+=3Df67554569818c29c4c844d121&amp;id=3D1250c1dffd&amp;e=3Dac54f1564a" target=
+=3D"_blank"><img src=3D"https://cdn-images.mailchimp.com/icons/social-block=
+-v2/color-linkedin-48.png" alt=3D"LinkedIn" style=3D"display:block;border:0=
+;height:auto;outline:none;text-decoration:none" height=3D"24" width=3D"24">=
+</a>
+                                                                           =
+     </td>
+
+
+                                                                        </t=
+r>
+                                                                    </tbody=
+></table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody></table>
+                                                    </td>
+                                                </tr>
+                                            </tbody></table>
+
+                                       =20
+
+                                       =20
+
+
+                                            <table align=3D"left" border=3D=
+"0" cellpadding=3D"0" cellspacing=3D"0" style=3D"display:inline;border-coll=
+apse:collapse">
+                                                <tbody><tr>
+                                                    <td valign=3D"top" styl=
+e=3D"padding-right:10px;padding-bottom:9px">
+                                                        <table border=3D"0"=
+ cellpadding=3D"0" cellspacing=3D"0" width=3D"100%" style=3D"border-collaps=
+e:collapse">
+                                                            <tbody><tr>
+                                                                <td align=
+=3D"left" valign=3D"middle" style=3D"padding-top:5px;padding-right:10px;pad=
+ding-bottom:5px;padding-left:9px">
+                                                                    <table =
+align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"" =
+style=3D"border-collapse:collapse">
+                                                                        <tb=
+ody><tr>
+
+                                                                           =
+     <td align=3D"center" valign=3D"middle" width=3D"24">
+                                                                           =
+         <a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=
+=3Df67554569818c29c4c844d121&amp;id=3D6a58d00637&amp;e=3Dac54f1564a" target=
+=3D"_blank"><img src=3D"https://cdn-images.mailchimp.com/icons/social-block=
+-v2/color-twitter-48.png" alt=3D"Twitter" style=3D"display:block;border:0;h=
+eight:auto;outline:none;text-decoration:none" height=3D"24" width=3D"24"></=
+a>
+                                                                           =
+     </td>
+
+
+                                                                        </t=
+r>
+                                                                    </tbody=
+></table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody></table>
+                                                    </td>
+                                                </tr>
+                                            </tbody></table>
+
+                                       =20
+
+                                       =20
+
+
+                                            <table align=3D"left" border=3D=
+"0" cellpadding=3D"0" cellspacing=3D"0" style=3D"display:inline;border-coll=
+apse:collapse">
+                                                <tbody><tr>
+                                                    <td valign=3D"top" styl=
+e=3D"padding-right:10px;padding-bottom:9px">
+                                                        <table border=3D"0"=
+ cellpadding=3D"0" cellspacing=3D"0" width=3D"100%" style=3D"border-collaps=
+e:collapse">
+                                                            <tbody><tr>
+                                                                <td align=
+=3D"left" valign=3D"middle" style=3D"padding-top:5px;padding-right:10px;pad=
+ding-bottom:5px;padding-left:9px">
+                                                                    <table =
+align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"" =
+style=3D"border-collapse:collapse">
+                                                                        <tb=
+ody><tr>
+
+                                                                           =
+     <td align=3D"center" valign=3D"middle" width=3D"24">
+                                                                           =
+         <a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=
+=3Df67554569818c29c4c844d121&amp;id=3D6868f8f2c8&amp;e=3Dac54f1564a" target=
+=3D"_blank"><img src=3D"https://cdn-images.mailchimp.com/icons/social-block=
+-v2/color-facebook-48.png" alt=3D"Facebook" style=3D"display:block;border:0=
+;height:auto;outline:none;text-decoration:none" height=3D"24" width=3D"24">=
+</a>
+                                                                           =
+     </td>
+
+
+                                                                        </t=
+r>
+                                                                    </tbody=
+></table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody></table>
+                                                    </td>
+                                                </tr>
+                                            </tbody></table>
+
+                                       =20
+
+                                       =20
+
+
+                                            <table align=3D"left" border=3D=
+"0" cellpadding=3D"0" cellspacing=3D"0" style=3D"display:inline;border-coll=
+apse:collapse">
+                                                <tbody><tr>
+                                                    <td valign=3D"top" styl=
+e=3D"padding-right:0;padding-bottom:9px">
+                                                        <table border=3D"0"=
+ cellpadding=3D"0" cellspacing=3D"0" width=3D"100%" style=3D"border-collaps=
+e:collapse">
+                                                            <tbody><tr>
+                                                                <td align=
+=3D"left" valign=3D"middle" style=3D"padding-top:5px;padding-right:10px;pad=
+ding-bottom:5px;padding-left:9px">
+                                                                    <table =
+align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"" =
+style=3D"border-collapse:collapse">
+                                                                        <tb=
+ody><tr>
+
+                                                                           =
+     <td align=3D"center" valign=3D"middle" width=3D"24">
+                                                                           =
+         <a href=3D"https://venturebeat.us17.list-manage.com/track/click?u=
+=3Df67554569818c29c4c844d121&amp;id=3Ddd4fd6a8de&amp;e=3Dac54f1564a" target=
+=3D"_blank"><img src=3D"https://cdn-images.mailchimp.com/icons/social-block=
+-v2/color-link-48.png" alt=3D"Website" style=3D"display:block;border:0;heig=
+ht:auto;outline:none;text-decoration:none" height=3D"24" width=3D"24"></a>
+                                                                           =
+     </td>
+
+
+                                                                        </t=
+r>
+                                                                    </tbody=
+></table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody></table>
+                                                    </td>
+                                                </tr>
+                                            </tbody></table>
+
+                                       =20
+
+                                   =20
+                                </td>
+                            </tr>
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </td>
+    </tr>
+</tbody></table>
+
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" class=3D"m_-6335726926251756609mcnDividerBlock" style=3D"min-width:100%=
+;border-collapse:collapse;table-layout:fixed!important">
+    <tbody>
+        <tr>
+            <td style=3D"min-width:100%;padding:10px 18px 25px">
+                <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"min-width:100%;border-top:2px solid #eeeeee;border-col=
+lapse:collapse">
+                    <tbody><tr>
+                        <td>
+                            <span></span>
+                        </td>
+                    </tr>
+                </tbody></table>
+
+            </td>
+        </tr>
+    </tbody>
+</table><table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"10=
+0%" style=3D"min-width:100%;border-collapse:collapse">
+    <tbody>
+        <tr>
+            <td valign=3D"top" style=3D"padding-top:9px">
+              =09
+		=09
+			=09
+                <table align=3D"left" border=3D"0" cellpadding=3D"0" cellsp=
+acing=3D"0" style=3D"max-width:100%;min-width:100%;border-collapse:collapse=
+" width=3D"100%" class=3D"m_-6335726926251756609mcnTextContentContainer">
+                    <tbody><tr>
+
+                        <td valign=3D"top" class=3D"m_-6335726926251756609m=
+cnTextContent" style=3D"padding-top:0;padding-right:18px;padding-bottom:9px=
+;padding-left:18px;word-break:break-word;color:#656565;font-family:&#39;Rob=
+oto&#39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:12px=
+;line-height:150%;text-align:center">
+
+                            <a href=3D"https://venturebeat.us17.list-manage=
+.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3D257addca4d&amp;e=3D=
+ac54f1564a" style=3D"color:#656565;font-weight:normal;text-decoration:under=
+line" target=3D"_blank"><img height=3D"32" src=3D"https://mcusercontent.com=
+/f67554569818c29c4c844d121/images/efc3a4f9-7879-4f58-adaf-252053ebf4db.png"=
+ style=3D"border:0px;width:250px;height:32px;margin:0px;outline:none;text-d=
+ecoration:none;max-width:100%" width=3D"250"></a><br>
+<br>
+Want to change how you receive these emails?<br>
+You can <a href=3D"https://venturebeat.us17.list-manage.com/profile?u=3Df67=
+554569818c29c4c844d121&amp;id=3D77ca0f3c9e&amp;e=3Dac54f1564a&amp;c=3D333be=
+89005" style=3D"color:#656565;font-weight:normal;text-decoration:underline"=
+ target=3D"_blank">update your preferences</a> or <a href=3D"https://ventur=
+ebeat.us17.list-manage.com/unsubscribe?u=3Df67554569818c29c4c844d121&amp;id=
+=3D77ca0f3c9e&amp;e=3Dac54f1564a&amp;c=3D333be89005" style=3D"color:#656565=
+;font-weight:normal;text-decoration:underline" target=3D"_blank">unsubscrib=
+e from this list</a>.<br>
+=C2=A0
+<p style=3D"margin:10px 0;padding:0;color:#656565;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:12px;line=
+-height:150%;text-align:center">500 Sansome St. #404, San Francisco, CA 941=
+11</p>
+
+<p style=3D"margin:10px 0;padding:0;color:#656565;font-family:&#39;Roboto&#=
+39;,&#39;Helvetica Neue&#39;,Helvetica,Arial,sans-serif;font-size:12px;line=
+-height:150%;text-align:center"><em>Copyright =C2=A9 2023 VentureBeat, Inc.=
+</em>.=C2=A0View our privacy policy=C2=A0<a href=3D"https://venturebeat.us1=
+7.list-manage.com/track/click?u=3Df67554569818c29c4c844d121&amp;id=3D6b398b=
+f3fb&amp;e=3Dac54f1564a" id=3D"m_-6335726926251756609m_-3956271272926694408=
+" style=3D"color:#656565;font-weight:normal;text-decoration:underline" targ=
+et=3D"_blank">here</a><a href=3D"https://venturebeat.us17.list-manage.com/t=
+rack/click?u=3Df67554569818c29c4c844d121&amp;id=3D0e89e40105&amp;e=3Dac54f1=
+564a" style=3D"color:#656565;font-weight:normal;text-decoration:underline" =
+target=3D"_blank">.</a></p>
+
+                        </td>
+                    </tr>
+                </tbody></table>
+			=09
+
+			=09
+            </td>
+        </tr>
+    </tbody>
+</table></td>
+                            </tr>
+                        </tbody></table>
+                       =20
+                       =20
+                    </td>
+                </tr>
+            </tbody></table>
+        </center>
+    <img src=3D"https://venturebeat.us17.list-manage.com/track/open.php?u=
+=3Df67554569818c29c4c844d121&amp;id=3D333be89005&amp;e=3Dac54f1564a" height=
+=3D"1" width=3D"1" alt=3D""></div>
+</div></div><br clear=3D"all"><div><br></div><span class=3D"gmail_signature=
+_prefix">-- </span><br><div dir=3D"ltr" class=3D"gmail_signature" data-smar=
+tmail=3D"gmail_signature"><div dir=3D"ltr"><b><span style=3D"font-size:10pt=
+;color:black">Test User</span></b><b><span style=3D"font-size:8pt;=
+color:maroon"><br></span></b><div><span style=3D"font-size:8pt;color:rgb(64=
+,64,64)">
+Mobile:=C2=A0
+555-555-5555</span><u><span style=3D"font-size:8pt;color:rgb(54,95,145)"><b=
+r></span></u><span style=3D"font-size:8pt;color:black"></span></div></div><=
+/div></div>
+
+--000000000000a20e1f060c36ac73--
