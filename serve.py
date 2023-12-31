@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 from src.models.dataset_model import DatasetFileFormatNames
 from src.parsers.html_parse import PARSE_FNS
 from src.services.io import DATASET_PATH, filter_files, html_to_md_documents
+from src.utils.logging_init import init_logging
 
 ENV_CONTEXT = os.getenv("ENV_CONTEXT", "development")
 
@@ -24,16 +25,15 @@ load_dotenv(env_file)
 
 app = FastAPI
 
-# TODO: implement
-# CONFIG_FILE = "pyproject.toml"
-# logger = init_logging(CONFIG_FILE)
+CONFIG_FILE = "pyproject.toml"
+logger = init_logging(CONFIG_FILE)
 
 app.add_middleware(HTTPSRedirectMiddleware)
 
 # Make sure we're live
 @app.get("/")
 async def root():
-    # logger.info("Hello World")
+    logger.info("Hello World")
     return {"message": "Hello World"}
 
 
