@@ -6,7 +6,7 @@ from typing import Any
 from dotenv import load_dotenv
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import ChatOpenAI  # noqa: F401
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document, StrOutputParser
 from langchain.schema.prompt_template import format_document
@@ -22,10 +22,12 @@ load_dotenv()
 os.environ["LANGCHAIN_WANDB_TRACING"] = "true"
 os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 
-from langchain.chat_models import FakeListChatModel
+# Uncomment for fake LLM
+from langchain.chat_models import FakeListChatModel  # noqa: E402
 
 llm = FakeListChatModel(responses=["foo", "bar", "baz"])
 
+# # Uncomment for real LLM
 # llm = ChatOpenAI()
 
 
@@ -177,7 +179,7 @@ async def map_reduce(
     *,
     max_concurrency: int = 3,
     **kwargs,
-):
+) -> str:
     """Summarize a list of documents. The documents are first summarized individually
     using the first_pass_prompt. Then those summaries are combined and summarized using
     the reduce_prompt. The reduced summaries are combined using the combine_summaries_prompt.
@@ -249,8 +251,10 @@ async def map_reduce(
             _formatted_combine_prompt + "{context}"
         )
 
-    print(
-        await map_reduce_chain.with_config({
-            "callbacks": [ConsoleCallbackHandler()]
-        }).ainvoke(docs, config=chain_configs)
-    )
+    result = await map_reduce_chain.with_config({
+        "callbacks": [ConsoleCallbackHandler()]
+    }).ainvoke(docs, config=chain_configs)
+
+    print(result)
+
+    return result
