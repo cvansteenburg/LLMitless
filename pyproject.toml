@@ -50,3 +50,23 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "unstructured.*"
 ignore_missing_imports = true
+
+[tool.LANCHAIN_SANDBOX.logging]
+version = 1
+
+[tool.LANCHAIN_SANDBOX.logging.formatters.simple]
+format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+[tool.LANCHAIN_SANDBOX.logging.handlers.file_handler]
+class = "logging.handlers.TimedRotatingFileHandler"
+level = "DEBUG"
+formatter = "simple"
+filename = "logs/briefly.log"
+when = "D"
+interval = 1
+backupCount = 7
+
+[tool.LANCHAIN_SANDBOX.logging.loggers.briefly]
+level = "DEBUG"
+handlers = ["file_handler"]
+propagate = true
