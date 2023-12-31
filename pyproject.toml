@@ -23,6 +23,7 @@ pydantic = "^2.5.2"
 beautifulsoup4 = "^4.12.2"
 markdownify = "^0.11.6"
 html5lib = "^1.1"
+tomli = "^2.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -49,3 +50,23 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "unstructured.*"
 ignore_missing_imports = true
+
+[tool.LANCHAIN_SANDBOX.logging]
+version = 1
+
+[tool.LANCHAIN_SANDBOX.logging.formatters.simple]
+format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+[tool.LANCHAIN_SANDBOX.logging.handlers.file_handler]
+class = "logging.handlers.TimedRotatingFileHandler"
+level = "DEBUG"
+formatter = "simple"
+filename = "logs/briefly.log"
+when = "D"
+interval = 1
+backupCount = 7
+
+[tool.LANCHAIN_SANDBOX.logging.loggers.briefly]
+level = "DEBUG"
+handlers = ["file_handler"]
+propagate = true
