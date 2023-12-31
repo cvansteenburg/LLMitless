@@ -177,7 +177,7 @@ async def map_reduce(
     *,
     max_concurrency: int = 3,
     **kwargs,
-):
+) -> str:
     """Summarize a list of documents. The documents are first summarized individually
     using the first_pass_prompt. Then those summaries are combined and summarized using
     the reduce_prompt. The reduced summaries are combined using the combine_summaries_prompt.
@@ -249,8 +249,10 @@ async def map_reduce(
             _formatted_combine_prompt + "{context}"
         )
 
-    print(
-        await map_reduce_chain.with_config({
-            "callbacks": [ConsoleCallbackHandler()]
-        }).ainvoke(docs, config=chain_configs)
-    )
+    result = await map_reduce_chain.with_config({
+        "callbacks": [ConsoleCallbackHandler()]
+    }).ainvoke(docs, config=chain_configs)
+
+    print(result)
+
+    return result
