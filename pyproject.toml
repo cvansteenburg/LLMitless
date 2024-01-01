@@ -2,7 +2,7 @@
 name = "langchain-sandbox"
 version = "0.1.0"
 description = ""
-authors = ["Chase <cvansteenburg@gmail.com>"]
+authors = ["Chase VanSteenburg <cvansteenburg@gmail.com>"]
 readme = "README.md"
 packages = [
     {include = "src"},
@@ -61,12 +61,12 @@ format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 class = "logging.handlers.TimedRotatingFileHandler"
 level = "DEBUG"
 formatter = "simple"
-filename = "logs/briefly.log"
+filename = "logs/llm_testbed.log"
 when = "D"
 interval = 1
 backupCount = 7
 
-[tool.llm_testbed.logging.loggers.briefly]
+[tool.llm_testbed.logging.loggers.llm_testbed]
 level = "DEBUG"
 handlers = ["file_handler"]
 propagate = true
