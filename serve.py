@@ -45,9 +45,6 @@ async def root():
     return {"message": "Hello World"}
 
 
-# Summarize from disk
-# TODO: standardize language around core_prompt, make sure .format in map_reduce.py doesn't throw exception if there is no such template var in the input
-
 # Summarize
 # Specify format
 
