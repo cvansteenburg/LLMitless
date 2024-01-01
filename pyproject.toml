@@ -51,13 +51,13 @@ ignore_missing_imports = true
 module = "unstructured.*"
 ignore_missing_imports = true
 
-[tool.LANCHAIN_SANDBOX.logging]
+[tool.llm_testbed.logging]
 version = 1
 
-[tool.LANCHAIN_SANDBOX.logging.formatters.simple]
+[tool.llm_testbed.logging.formatters.simple]
 format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-[tool.LANCHAIN_SANDBOX.logging.handlers.file_handler]
+[tool.llm_testbed.logging.handlers.file_handler]
 class = "logging.handlers.TimedRotatingFileHandler"
 level = "DEBUG"
 formatter = "simple"
@@ -66,7 +66,7 @@ when = "D"
 interval = 1
 backupCount = 7
 
-[tool.LANCHAIN_SANDBOX.logging.loggers.briefly]
+[tool.llm_testbed.logging.loggers.briefly]
 level = "DEBUG"
 handlers = ["file_handler"]
 propagate = true
