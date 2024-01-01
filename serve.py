@@ -5,8 +5,8 @@ from typing import Annotated, Any, Coroutine
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
-from langchain_core.documents import Document
 from langchain.callbacks import get_openai_callback
+from langchain_core.documents import Document
 from pydantic import Field
 
 from src.chains.map_reduce import map_reduce
@@ -91,15 +91,14 @@ async def summarize_from_disk(
         if core_prompt is None:
             prompt = SummarizationTestPrompt.SIMPLE.value
 
-        if 
-
         with get_openai_callback() as cb:
-            await map_reduce(parsed_documents, prompt)
-            print(f"\n\n{cb}")
+            summary = await map_reduce(parsed_documents, prompt)
+            usage_report = cb
 
         return {
             "status": "success",
-            "results": parsed_documents,
+            "results": summary,
+            "usage": usage_report
         }
 
     except Exception as e:
