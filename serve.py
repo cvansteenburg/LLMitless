@@ -45,7 +45,7 @@ async def root():
     return {"message": "Hello World"}
 
 # Summarize from disk
-# TODO: standardize language around core_prompt, make sure .format in map_reduce.py doesn't throw exception if there is not such template var in the input
+# TODO: standardize language around core_prompt, make sure .format in map_reduce.py doesn't throw exception if there is no such template var in the input
 
 # Summarize
 # Specify format
@@ -61,6 +61,7 @@ async def summarize_from_disk(
     collapse_prompt: Annotated[str | None, Field(title="collapse prompt", description="In a map-reduce summarization strategy, the LLM will summarize the summaries to reduce the total amount of text. LLM will use this prompt to summarize the summaries. Use template variables {core_prompt} to include the core prompt, and {context} wherever the summaries to summarize will be inserted.")] = None,
     combine_prompt: Annotated[str | None, Field(title="combine prompt", description="In a map-reduce summarization strategy, the last step is for the LLM to combine the summaries. LLM will use this prompt to combine the summaries. Use template variables {core_prompt} to include the core prompt, and {context} wherever the list of summaries to combine will be inserted.")] = None,
     *,
+    max_concurrency: Annotated[int, Field(title="Max concurrency", description="Maximum number of parallel calls to the LLM the summarizer is allowed to make.")] = 3,
     max_tokens_per_doc: Annotated[int, Field(title="Max tokens per doc", description="The maximum number of tokens to include in each doc that the LLM will summarize. Change this to according the context window of the LLM and the length of the prompt.")] = 3000,
     metadata_to_include: Annotated[list[str], Field(title="Metadata passed to LLM", description="In a map-reduce summarization strategy, docs are combined and presented together to the llm. The metadata keys are included in the combined documents to give the LLM more context.")] = None,
     iteration_limit: Annotated[int, Field(title="Iteration limit", description='In a map-reduce summarization strategy, this is the maximum number of times the LLM will "summarize the summaries".')] = 3,
@@ -94,7 +95,7 @@ async def summarize_from_disk(
             prompt = SummarizationTestPrompt.SIMPLE.value
 
         with get_openai_callback() as cb:
-            summary = await map_reduce(parsed_documents, prompt, collapse_prompt, combine_prompt, iteration_limit=iteration_limit, collapse_token_max=collapse_token_max)
+            summary = await map_reduce(parsed_documents, prompt, collapse_prompt, combine_prompt, max_concurrency=max_concurrency, iteration_limit=iteration_limit, collapse_token_max=collapse_token_max)
             usage_report = cb
 
         return {
