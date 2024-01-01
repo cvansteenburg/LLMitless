@@ -56,7 +56,7 @@ def safe_format(template: str, **kwargs) -> str:
 
 
 prompts = {
-    "initial_prompt_template": str("Summarize {page_content}"),
+    "core_prompt_template": str("Summarize {page_content}"),
     "collapser_prompt_template": str("Collapse {context}"),
     "combiner_prompt_template": str("Combine these summaries:\n\n{context}"),
 }  # always redefined at runtime.
@@ -71,7 +71,7 @@ def populate_template(dict_of_substitutions: dict, template: str) -> str:
 map_chain = (
     {
         "doc_in_template": lambda x: format_document(
-            x, prompt=PromptTemplate.from_template(prompts["initial_prompt_template"])
+            x, prompt=PromptTemplate.from_template(prompts["core_prompt_template"])
         )
     }
     | PromptTemplate.from_template("{doc_in_template}")
@@ -173,7 +173,7 @@ map_reduce_chain = (
 
 async def map_reduce(
     docs: list[Document],
-    first_pass_prompt: str,
+    core_prompt: str,
     reduce_prompt: str | None = None,
     combine_summaries_prompt: str | None = None,
     *,
@@ -181,23 +181,23 @@ async def map_reduce(
     **kwargs,
 ) -> str:
     """Summarize a list of documents. The documents are first summarized individually
-    using the first_pass_prompt. Then those summaries are combined and summarized using
+    using the core_prompt. Then those summaries are combined and summarized using
     the reduce_prompt. The reduced summaries are combined using the combine_summaries_prompt.
 
     Args:
         docs: A list of documents to summarize
-        first_pass_prompt: The prompt to use for the individual Document summarization.
+        core_prompt: The prompt to use for the individual Document summarization.
             Must include {page_content} where the content of the document will be inserted.
         reduce_prompt: The prompt to use for the summary reduction.
             If None, the default is:\n\n
             "The summary that follows was generated based on the following prompt:\n\n
-            {initial_prompt}\n\n
+            {core_prompt}\n\n
             I want you to follow the same instructions, but
             shorten the summary still further. Here's the summary:\n\n"
         combine_summaries_prompt: The prompt to use for the summary combination.
             If None, the default is:\n\n
             "The summaries that follow were generated based on the following prompt:\n\n
-            {initial_prompt}\n\n
+            {core_prompt}\n\n
             I want you to follow the same instructions while combining
             the summaries.Here are the summaries to combine:\n\n"
         max_concurrency: The maximum number of concurrent requests to allow.
@@ -213,12 +213,12 @@ async def map_reduce(
     chain_configs.update(kwargs)
 
     global prompts
-    prompts["initial_prompt_template"] = str(first_pass_prompt)
+    prompts["core_prompt_template"] = str(core_prompt)
 
     if reduce_prompt is None:
         prompts["collapser_prompt_template"] = str(
             "The summary that follows was generated based on the following prompt:\n\n"
-            + first_pass_prompt
+            + core_prompt
             + "\n\nI want you to follow the same instructions, but shorten the summary"
             " while being very careful not to cut information the user wants."
             " If you can't shorten the summary "
@@ -227,7 +227,7 @@ async def map_reduce(
         )
     else:
         _formatted_reduce_prompt = reduce_prompt.format(
-            initial_prompt=prompts["initial_prompt_template"]
+            core_prompt=prompts["core_prompt_template"]
         )
         prompts["collapser_prompt_template"] = str(
             _formatted_reduce_prompt + "{context}"
@@ -237,7 +237,7 @@ async def map_reduce(
         prompts["combiner_prompt_template"] = str(
             "The summaries that follow were generated based on the following"
             " prompt:\n\n"
-            + first_pass_prompt
+            + core_prompt
             + "\n\nI want you to follow the same instructions while combining the"
             " summaries. You should remove metadata and duplicate information, and"
             " format the output, but do not cut out information. Here are the summaries"
@@ -245,7 +245,7 @@ async def map_reduce(
         )
     else:
         _formatted_combine_prompt = combine_summaries_prompt.format(
-            initial_prompt=prompts["initial_prompt_template"]
+            core_prompt=prompts["core_prompt_template"]
         )
         prompts["combiner_prompt_template"] = str(
             _formatted_combine_prompt + "{context}"
