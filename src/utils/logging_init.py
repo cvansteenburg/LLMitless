@@ -10,7 +10,7 @@ def init_logging(config_file: str):
         except tomli.TOMLDecodeError as e:
             print(f"Error decoding {config_file}: {e}")
 
-    logging_config = config_data.get("tool", {}).get("briefly", {}).get("logging")
+    logging_config = config_data.get("tool", {}).get("llm_testbed", {}).get("logging")
 
     if logging_config:
         logging.config.dictConfig(logging_config)
