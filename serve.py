@@ -67,7 +67,7 @@ async def inbox(
             "results": parsed_documents,
         }
     except Exception as e:
-        # logger.error(e)
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server error",
