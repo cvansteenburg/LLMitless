@@ -120,24 +120,24 @@ def get_num_tokens(docs: list[Document]) -> int:
 async def _collapse(
     docs,
     config,
-    token_max=6000,
+    collapse_token_max=6000,
     iteration_limit=2,
 ):
     collapse_ct = 1
 
-    token_max = config["token_max"] if "token_max" in config else token_max
+    collapse_token_max = config["token_max"] if "token_max" in config else collapse_token_max
     iteration_limit = (
         config["iteration_limit"] if "iteration_limit" in config else iteration_limit
     )
 
-    while get_num_tokens(docs) > token_max and collapse_ct < iteration_limit:
+    while get_num_tokens(docs) > collapse_token_max and collapse_ct < iteration_limit:
 
         # configure collapse_chain to include run number
         config["run_name"] = f"Collapse {collapse_ct}"
         collapse_chain_w_config = partial(collapse_chain.invoke, config=config)
 
         # create a list of lists of docs, each with content (excl. metadata) no longer than token_max (pops docs from queue until max, doesn't mix and match)
-        split_docs = split_list_of_docs(docs, get_num_tokens, token_max)
+        split_docs = split_list_of_docs(docs, get_num_tokens, collapse_token_max)
 
         # execute collapse_chain on each list of docs
         docs = [collapse_docs(_docs, collapse_chain_w_config) for _docs in split_docs]
