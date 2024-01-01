@@ -75,7 +75,7 @@ async def inbox(
             metadata_to_include,
         )
 
-        parsed_documents = asyncio.run(preprocessor)
+        parsed_documents = await preprocessor
 
         return {
             "status": "success",
