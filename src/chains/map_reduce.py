@@ -4,6 +4,7 @@ from string import Formatter
 from typing import Any
 
 from dotenv import load_dotenv
+from langchain.callbacks.base import BaseCallbackHandler
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain.chat_models import ChatOpenAI  # noqa: F401
@@ -16,19 +17,55 @@ from langchain.schema.runnable import (
     RunnableParallel,
     RunnablePassthrough,
 )
+from langchain_core.runnables import ConfigurableField
+
+from src.services.io import count_tokens
 
 load_dotenv()
 
 os.environ["LANGCHAIN_WANDB_TRACING"] = "true"
 os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 
-# Uncomment for fake LLM
-from langchain.chat_models import FakeListChatModel  # noqa: E402
+# UNCOMMENT FOR FAKE LLM
+# from langchain.chat_models import FakeListChatModel  # noqa: E402
 
-llm = FakeListChatModel(responses=["foo", "bar", "baz"])
+# llm = FakeListChatModel(responses=["foo", "bar", "baz"])
 
-# # Uncomment for real LLM
-# llm = ChatOpenAI()
+# # LLM DEBUGGER - PROVIDES VERBOSE READOUT OF LLM OBJECT CONFIG AND PROMPT AT INVOCATION
+# class LLMTempReporter(BaseCallbackHandler):
+#     def on_llm_start(
+#         self, serialized: dict[str, Any], prompts: list[str], **kwargs: Any
+#     ) -> Any:
+#         print(f"LLM START WITH PROPERTIES {serialized} AND PROMPTS {prompts} AND KWARGS {kwargs}")
+
+# temp_reporter = LLMTempReporter()
+
+# # ADD AS LLM ARGUMENT FOR DEBUG
+# llm = ChatOpenAI(callbacks=[temp_reporter]).configurable_fields(
+
+# # UNCOMMENT FOR LIVE OPENAI LLM
+llm = ChatOpenAI().configurable_fields(
+    openai_api_key=ConfigurableField(
+        id="api_key",
+        name="OpenAI API Key",
+        description="An API key for OpenAI. Get one from https://openai.com",
+    ),
+    openai_organization=ConfigurableField(
+        id="organization",
+        name="OpenAI Organization",
+        description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization."
+    ),
+    model_name=ConfigurableField(
+        id="model",
+        name="OpenAI Model",
+        description="The model to use for LLM calls. Defaults to gpt-3.5-turbo",
+    ),
+    temperature=ConfigurableField(
+        id="temperature",
+        name="LLM Temperature",
+        description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
+    )
+)
 
 
 def safe_format(template: str, **kwargs) -> str:
@@ -82,7 +119,7 @@ map_chain = (
 sum_and_recombine = (
     RunnableParallel({"doc": RunnablePassthrough(), "content": map_chain})
     | (lambda x: Document(page_content=x["content"], metadata=x["doc"].metadata))
-).with_config({"run_name": "Summaries to Document"})
+).with_config(run_name="Summaries to Document")
 
 
 # The chain we'll repeatedly apply to collapse subsets of the documents
@@ -114,7 +151,7 @@ collapse_chain: Runnable[Any, str] = (
 # LC method ties count to LLM which is desirable IF it actually does...
 # ... looked hardcoded in my review of the code. Check this.
 def get_num_tokens(docs: list[Document]) -> int:
-    return llm.get_num_tokens(combine_docs(docs))
+    return count_tokens(combine_docs(docs))
 
 
 async def _collapse(
@@ -126,10 +163,16 @@ async def _collapse(
     collapse_ct = 1
 
     collapse_token_max = (
-        config["token_max"] if "token_max" in config else collapse_token_max
+        config["attribute_configs"]["collapse_token_max"]
+        if "attribute_configs" in config
+        and "collapse_token_max" in config["attribute_configs"]
+        else collapse_token_max
     )
     iteration_limit = (
-        config["iteration_limit"] if "iteration_limit" in config else iteration_limit
+        config["attribute_configs"]["iteration_limit"]
+        if "attribute_configs" in config
+        and "iteration_limit" in config["attribute_configs"]
+        else iteration_limit
     )
 
     while get_num_tokens(docs) > collapse_token_max and collapse_ct < iteration_limit:
@@ -179,6 +222,10 @@ async def map_reduce(
     reduce_prompt: str | None = None,
     combine_summaries_prompt: str | None = None,
     *,
+    api_key: str | None = None,
+    organization: str | None = None,
+    model: str | None = None,
+    temperature: float | None = None,
     max_concurrency: int = 3,
     **kwargs,
 ) -> str:
@@ -208,12 +255,35 @@ async def map_reduce(
         The summary as a string.
 
     """
-    chain_configs = {
+
+    # Build configuration map
+    configurables = {}
+
+    if api_key is not None:
+        configurables["api_key"] = api_key
+    if organization is not None:
+        configurables["organization"] = organization
+    if model is not None:
+        configurables["model"] = model
+    if temperature is not None:
+        configurables["temperature"] = temperature
+
+    attribute_configs = {}
+
+    attribute_configs.update(kwargs)
+
+    callbacks = [ConsoleCallbackHandler()]
+
+    max_concurrency = max_concurrency
+
+    combined_configs = {
+        "callbacks": callbacks,
+        "configurable": configurables,
+        "attribute_configs": attribute_configs,
         "max_concurrency": max_concurrency,
     }
 
-    chain_configs.update(kwargs)
-
+    # set prompts
     global prompts
     prompts["core_prompt_template"] = str(core_prompt)
 
@@ -253,9 +323,9 @@ async def map_reduce(
             _formatted_combine_prompt + "{context}"
         )
 
-    result = await map_reduce_chain.with_config({
-        "callbacks": [ConsoleCallbackHandler()]
-    }).ainvoke(docs, config=chain_configs)
+    # run chain
+    result = await map_reduce_chain.with_config(combined_configs).ainvoke(docs)
+    # result = await map_reduce_chain.ainvoke(docs, config=combined_configs)
 
     print(result)
 

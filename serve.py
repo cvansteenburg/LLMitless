@@ -117,7 +117,6 @@ class SummarizeMapReduce(BaseModel):
             " {context} wherever the list of summaries to combine will be inserted."
         ),
     )
-    # PLACEHOLDER. May later want to include... system_prompt: Annotated[str | None, Field(title="system prompt", description="Provides a role, context, and instructions for the LLM. This is a string with brackets around template variables. Must include {core_prompt}")] = None,
     max_concurrency: int = Field(
         default=3,
         title="Max concurrency",
@@ -143,6 +142,28 @@ class SummarizeMapReduce(BaseModel):
         ),
     )
 
+
+class UserLLMConfig(BaseModel):
+    api_key: str | None = Header(
+        ...,
+        title="API key",
+        description="API key for the LLM. Default LLM is OpenAI",
+    ),
+    organization: str | None = Field(
+        default=None,
+        title="Organization",
+        description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization.",
+    ),
+    model_name: str = Field(
+        default=None,
+        title="Model name",
+        description="The model to use for LLM calls. If not specified, defaults to gpt-3.5-turbo"
+    ),
+    temperature: float = Field(
+        default=None,
+        title="Temperature",
+        description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
+    )
 
 class InputDocFormat(StrEnum):
     HTML = "html"
@@ -177,17 +198,13 @@ async def summarize(
     docs_to_summarize: list[DocumentContents],
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
-    api_key: str | None = Header(
-        default=None,
-        title="API key",
-        description="API key for the summarization LLM. OpenAI is default",
-    ),
+    llm_config: UserLLMConfig,
 ) -> SummarizationResult:
     """
     Summarize a list of documents. Input doc format can be html, markdown, or text, but
     docs all must be of the same format.
     """
-    if api_key is None:
+    if llm_config.api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
@@ -212,6 +229,10 @@ async def summarize(
                 prompt,
                 summarize_map_reduce.collapse_prompt,
                 summarize_map_reduce.combine_prompt,
+                api_key=llm_config.api_key,
+                organization=llm_config.organization,
+                model=llm_config.model_name,
+                temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
                 iteration_limit=summarize_map_reduce.iteration_limit,
                 collapse_token_max=summarize_map_reduce.collapse_token_max,
@@ -233,21 +254,18 @@ async def summarize(
         )
 
 
+     
 @app.post("/summarize_from_disk")
 async def summarize_from_disk(
     file_filter: FileFilter,
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
-    api_key: str | None = Header(
-        default=None,
-        title="API key",
-        description="API key for the summarization LLM. OpenAI is default",
-    ),
+    llm_config: UserLLMConfig,
 ) -> SummarizationResult:
     """
     Select and summarize a subset of files from a dataset on the server.
     """
-    if api_key is None:
+    if llm_config.api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
@@ -279,6 +297,10 @@ async def summarize_from_disk(
                 prompt,
                 summarize_map_reduce.collapse_prompt,
                 summarize_map_reduce.combine_prompt,
+                api_key=llm_config.api_key,
+                organization=llm_config.organization,
+                model=llm_config.model_name,
+                temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
                 iteration_limit=summarize_map_reduce.iteration_limit,
                 collapse_token_max=summarize_map_reduce.collapse_token_max,
