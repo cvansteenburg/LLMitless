@@ -149,12 +149,12 @@ class UserLLMConfig(BaseModel):
         title="Organization",
         description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization.",
     ),
-    model: str = Field(
+    model: str | None = Field(
         default=None,
         title="Model name",
         description="The model to use for LLM calls. If not specified, defaults to gpt-3.5-turbo"
     ),
-    temperature: float = Field(
+    temperature: float | None = Field(
         default=None,
         title="Temperature",
         description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
