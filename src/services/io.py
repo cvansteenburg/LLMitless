@@ -259,7 +259,9 @@ def parse_files(
     _file_count = 0
     for file in input_files:
         _file_count += 1
-        _metadata = file.metadata if file.metadata else {"title": f"Doc num {_file_count}"}
+        _metadata = (
+            file.metadata if file.metadata else {"title": f"Doc num {_file_count}"}
+        )
         _parsed_content = parse_function(file.page_content, **kwargs)
         docs.append(DocumentContents(page_content=_parsed_content, metadata=_metadata))
 
@@ -342,7 +344,11 @@ def consolidate_lists(
 
 
 async def html_to_md_documents(
-    input_files: list[Path] | list[DocumentContents], parse_fn, max_tokens_per_doc, metadata_to_include, **kwargs
+    input_files: list[Path] | list[DocumentContents],
+    parse_fn: Callable[[str, Any], str],
+    max_tokens_per_doc: int,
+    metadata_to_include: list[str],
+    **kwargs,
 ) -> list[Document]:
     try:
         if isinstance(input_files[0], Path):
@@ -351,7 +357,9 @@ async def html_to_md_documents(
             parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
 
     except TypeError as e:
-        logger.error(f"Error parsing files in html_to_md_documents. TypeError {e}", exc_info=e)
+        logger.error(
+            f"Error parsing files in html_to_md_documents. TypeError {e}", exc_info=e
+        )
         raise TypeError("Expected a list of a single type as input")
 
     docs = sources_to_docs(parsed_input_files)
@@ -414,6 +422,7 @@ if __name__ == "__main__":
 
     # RAW DATA INPUT
     from datasets import raw_data
+
     input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
 
     preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
@@ -424,7 +433,6 @@ if __name__ == "__main__":
     )
 
     parsed_documents = asyncio.run(preprocessor)
-
 
     # # PRINT PARSER OUTPUT
     # print(parsed_documents)
