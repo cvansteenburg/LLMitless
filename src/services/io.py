@@ -243,79 +243,48 @@ def parse_files_from_paths(
     return docs
 
 
-# Leaving write-to-disk functionality in case we'd like it
-# def parse_files(
-#     input_files: list[DocumentContents],
-#     parse_function: Callable[[str, Any], str] = (lambda x: x),
-#     *,
-#     return_docs: bool = True,
-#     write_to_file: bool = False,
-#     output_path: Path = OUTPUT_PATH,
-#     output_base_name: str = "combined",
-#     output_format: str = "txt",
-#     **kwargs: Any,
-# ) -> list[DocumentContents] | None:
-#     """
-#     Parses files, writes them to disk and/or returns them.
-#     return_docs and write_to_file cannot both be False.
-#     """
-#     if not (return_docs or write_to_file):
-#         raise ValueError("Either return_docs or write_to_file must be True.")
+def parse_files(
+    input_files: list[DocumentContents],
+    parse_function: Callable[[str, Any], str] = (lambda x: x),
+    **kwargs: Any,
+) -> list[DocumentContents] | None:
+    """
+    Parses files using the provided parse_function.
+    output_format should match output format of chosen parse_function
+    """
+    docs = []
+    _file_count = 0
+    for file in input_files:
+        _file_count += 1
+        _metadata = file.metadata if file.metadata else {"title": f"Doc num {_file_count}"}
+        _parsed_content = parse_function(file.page_content, **kwargs)
+        docs.append(DocumentContents(page_content=_parsed_content, metadata=_metadata))
 
-#     output_base_name = output_base_name.join(
-#         datetime.now().isoformat(timespec="milliseconds").split("T")
-#     )
-#     output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
-
-#     docs = []
-
-#     if write_to_file:
-#         with open(output_file_path, "x") as output_file:
-
-#             _file_count = 0
-#             for file in input_files:
-#                 _file_count += 1
-#                 _metadata = file.metadata if file.metadata else {"title": f"Doc num {_file_count}"}
-#                 parsed_content = parse_function(file.page_content, **kwargs)
-#                 output_file.write(f"DOC: {_metadata}\n{parsed_content}\n\n")
-#                 if return_docs:
-#                     docs.append(DocumentContents(page_content=parsed_content, metadata=_metadata))
-
-#     else:
-#         for file in input_files:
-#             title_name = f"{file_path.parent.name}/{file_path.name}"
-#             content = read_file_content(file_path)
-#             parsed_content = parse_function(content, **kwargs)
-#             docs.append({
-#                 "content": parsed_content,
-#                 "metadata": {"title": title_name},
-#             })
-
-#     return docs
+    return docs
 
 
-# def write_to_file(
-#     input_docs: list[Document] | list[Any],
-#     *,
-#     output_path: Path = OUTPUT_PATH,
-#     output_base_name: str = "combined",
-#     output_format: str = "txt",
-# ) -> None:
-#     """Writes input_docs to disk. If input_docs is a list of Documents, writes the
-#     page_content of each Document to disk. Otherwise, writes the string representation.
-#     """
+def write_to_file(
+    input_docs: list[Document] | list[Any],
+    *,
+    output_path: Path = OUTPUT_PATH,
+    output_base_name: str = "combined",
+    output_format: str = "txt",
+) -> None:
+    """Writes input_docs to disk. If input_docs is a list of Documents, writes the
+    page_content of each Document to disk. Otherwise, writes the string representation.
+    """
 
-#     output_base_name = output_base_name.join(
-#         datetime.now().isoformat(timespec="milliseconds").split("T")
-#     )
-#     output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
+    output_base_name = output_base_name.join(
+        datetime.now().isoformat(timespec="milliseconds").split("T")
+    )
+    output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
 
-#     with open(output_file_path, "x") as output_file:
-#         for item in input_docs:
-#             if isinstance(item, Document):
-#                 output_file.write(item.page_content)
-#             else:
-#                 output_file.write(str(item))
+    with open(output_file_path, "x") as output_file:
+        for item in input_docs:
+            if isinstance(item, Document):
+                output_file.write(item.page_content)
+            else:
+                output_file.write(str(item))
 
 
 def combine_document_content(
@@ -439,6 +408,10 @@ if __name__ == "__main__":
     )
 
     parsed_documents = asyncio.run(preprocessor)
+
+    # RAW DATA INPUT
+    # from datasets import raw_data
+    # input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
 
     # # PRINT PARSER OUTPUT
     # print(parsed_documents)
