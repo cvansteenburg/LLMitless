@@ -4,7 +4,6 @@ from string import Formatter
 from typing import Any
 
 from dotenv import load_dotenv
-from langchain.callbacks.base import BaseCallbackHandler
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain.chat_models import ChatOpenAI  # noqa: F401
@@ -32,6 +31,7 @@ os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 # llm = FakeListChatModel(responses=["foo", "bar", "baz"])
 
 # # LLM DEBUGGER - PROVIDES VERBOSE READOUT OF LLM OBJECT CONFIG AND PROMPT AT INVOCATION
+# from langchain.callbacks.base import BaseCallbackHandler
 # class LLMTempReporter(BaseCallbackHandler):
 #     def on_llm_start(
 #         self, serialized: dict[str, Any], prompts: list[str], **kwargs: Any
