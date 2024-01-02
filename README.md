@@ -5,9 +5,11 @@ Basic scaffolding / testbed for building LLM chains and testing.
 Supports local files, as well as those passed in directly or via API calls.
 
 ## Setup
-- Intended to be run locally. Install dependencies via poetry.
-- Add a '.env' file with api keys (wandb, openai, etc)
+- Install dependencies via poetry.
+- Add a '.env' file with your api keys (wandb, openai, etc)
 - Use datasets_sample as a template for the hierarchy of local files for use with chains. Best numbered and laid out in the format shown in `datasets_sample`
+- Set a port in `serve.py`, open the port (using ngrok, for example), and run `serve.py`.
+- LLM_testbed uses FastAPI: once running, you can find documentation and make test calls by visiting /docs
 
 ## Key modules
 `parsers/` contains modules that parse formats for use with LLMs
@@ -18,4 +20,4 @@ In `services`:
 
 `chains/` contains various chains. Files with suffix _ex are examples for referencing when building chains.
 
-`serve.py` Langsmith (FastAPI) for generating chain access endpoints
+`serve.py` Fast API endpoints
