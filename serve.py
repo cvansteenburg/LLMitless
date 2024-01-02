@@ -208,7 +208,7 @@ async def summarize_from_disk(
         logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Server error - {e}",
+            detail="Server error",
         )
 
 
