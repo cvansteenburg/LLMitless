@@ -154,7 +154,7 @@ class UserLLMConfig(BaseModel):
         title="Organization",
         description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization.",
     ),
-    model_name: str = Field(
+    model: str = Field(
         default=None,
         title="Model name",
         description="The model to use for LLM calls. If not specified, defaults to gpt-3.5-turbo"
@@ -231,7 +231,7 @@ async def summarize(
                 summarize_map_reduce.combine_prompt,
                 api_key=llm_config.api_key,
                 organization=llm_config.organization,
-                model=llm_config.model_name,
+                model=llm_config.model,
                 temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
                 iteration_limit=summarize_map_reduce.iteration_limit,
@@ -299,7 +299,7 @@ async def summarize_from_disk(
                 summarize_map_reduce.combine_prompt,
                 api_key=llm_config.api_key,
                 organization=llm_config.organization,
-                model=llm_config.model_name,
+                model=llm_config.model,
                 temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
                 iteration_limit=summarize_map_reduce.iteration_limit,
