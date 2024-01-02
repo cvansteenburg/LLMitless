@@ -2,12 +2,13 @@ import asyncio
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Callable, Coroutine, TypedDict
+from typing import Any, Callable, Coroutine
 
 import tiktoken
 from langchain.callbacks import get_openai_callback
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
 
 import datasets
 from src.models.dataset_model import DatasetFileFormatNames
@@ -47,12 +48,22 @@ def count_tokens(
         )
 
 
-class SourceDict(TypedDict):
-    content: str
-    metadata: dict | None  # may need to further constrain to string keys
+class DocumentContents(BaseModel):
+    """Class for storing a piece of text and associated metadata."""
+
+    page_content: str = Field(
+        ..., title="Page content", description="Content to summarize"
+    )
+    metadata: dict | None = Field(
+        title="Metadata",
+        description=(
+            "Arbitrary metadata about the page content (e.g., source, relationships to"
+            " other documents, etc.)."
+        ),
+    )
 
 
-def sources_to_docs(sources: list[SourceDict]) -> list[Document]:
+def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     return [
         Document(page_content=source["content"], metadata=source["metadata"])
         for source in sources
@@ -178,7 +189,7 @@ def read_file_content(file_path: Path) -> str:
         return content_file.read()
 
 
-def parse_files(
+def parse_files_from_paths(
     input_file_paths: list[Path],
     parse_function: Callable[[str, Any], str] = (lambda x: x),
     *,
@@ -188,7 +199,7 @@ def parse_files(
     output_base_name: str = "combined",
     output_format: str = "txt",
     **kwargs: Any,
-) -> list[SourceDict] | None:
+) -> list[DocumentContents] | None:
     """
     Reads files from disk, parses them using the provided parse_function, and optionally
     writes them to disk and/or returns them. return_docs and write_to_file cannot both be False.
@@ -230,28 +241,80 @@ def parse_files(
     return docs
 
 
-def write_to_file(
-    input_docs: list[Document] | list[Any],
-    *,
-    output_path: Path = OUTPUT_PATH,
-    output_base_name: str = "combined",
-    output_format: str = "txt",
-) -> None:
-    """Writes input_docs to disk. If input_docs is a list of Documents, writes the
-    page_content of each Document to disk. Otherwise, writes the string representation.
-    """
+# def parse_files(
+#     input_file_paths: list[Path],
+#     parse_function: Callable[[str, Any], str] = (lambda x: x),
+#     *,
+#     return_docs: bool = True,
+#     write_to_file: bool = False,
+#     output_path: Path = OUTPUT_PATH,
+#     output_base_name: str = "combined",
+#     output_format: str = "txt",
+#     **kwargs: Any,
+# ) -> list[SourceDict] | None:
+#     """
+#     Reads files from disk, parses them using the provided parse_function, and optionally
+#     writes them to disk and/or returns them. return_docs and write_to_file cannot both be False.
+#     """
+#     if not (return_docs or write_to_file):
+#         raise ValueError("Either return_docs or write_to_file must be True.")
 
-    output_base_name = output_base_name.join(
-        datetime.now().isoformat(timespec="milliseconds").split("T")
-    )
-    output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
+#     output_base_name = output_base_name.join(
+#         datetime.now().isoformat(timespec="milliseconds").split("T")
+#     )
+#     output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
 
-    with open(output_file_path, "x") as output_file:
-        for item in input_docs:
-            if isinstance(item, Document):
-                output_file.write(item.page_content)
-            else:
-                output_file.write(str(item))
+#     docs = []
+
+#     if write_to_file:
+#         with open(output_file_path, "x") as output_file:
+
+#             for file_path in input_file_paths:
+#                 title_name = f"{file_path.parent.name}/{file_path.name}"
+#                 content = read_file_content(file_path)
+#                 parsed_content = parse_function(content, **kwargs)
+#                 output_file.write(f"Title: {title_name}\n{parsed_content}\n\n")
+#                 if return_docs:
+#                     docs.append({
+#                         "content": parsed_content,
+#                         "metadata": {"title": title_name},
+#                     })
+
+#     else:
+#         for file_path in input_file_paths:
+#             title_name = f"{file_path.parent.name}/{file_path.name}"
+#             content = read_file_content(file_path)
+#             parsed_content = parse_function(content, **kwargs)
+#             docs.append({
+#                 "content": parsed_content,
+#                 "metadata": {"title": title_name},
+#             })
+
+#     return docs
+
+
+# def write_to_file(
+#     input_docs: list[Document] | list[Any],
+#     *,
+#     output_path: Path = OUTPUT_PATH,
+#     output_base_name: str = "combined",
+#     output_format: str = "txt",
+# ) -> None:
+#     """Writes input_docs to disk. If input_docs is a list of Documents, writes the
+#     page_content of each Document to disk. Otherwise, writes the string representation.
+#     """
+
+#     output_base_name = output_base_name.join(
+#         datetime.now().isoformat(timespec="milliseconds").split("T")
+#     )
+#     output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
+
+#     with open(output_file_path, "x") as output_file:
+#         for item in input_docs:
+#             if isinstance(item, Document):
+#                 output_file.write(item.page_content)
+#             else:
+#                 output_file.write(str(item))
 
 
 def combine_document_content(
@@ -308,7 +371,7 @@ def consolidate_lists(
 async def html_to_md_documents(
     input_files, parse_fn, max_tokens_per_doc, metadata_to_include, **kwargs
 ) -> list[Document]:
-    parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
+    parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
     docs = sources_to_docs(parsed_input_files)
     sized_docs = split_large_docs(docs, count_tokens, max_tokens_per_doc)
 
@@ -363,7 +426,7 @@ if __name__ == "__main__":
     input_files = filter_files(
         collection_digits="002",
         dataset=DATASET_PATH,
-        title_digits=["005"],
+        title_digits=["005", "006", "007"],
         file_format=DatasetFileFormatNames.HTML,
     )
 

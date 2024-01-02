@@ -13,6 +13,7 @@ from src.models.dataset_model import DatasetFileFormatNames
 from src.parsers.html_parse import PARSE_FNS
 from src.services.io import (
     DATASET_PATH,
+    DocumentContents,
     SummarizationTestPrompt,
     filter_files,
     html_to_md_documents,
@@ -214,6 +215,68 @@ async def summarize_from_disk(
 
 # TODO: Summarize endpoint
 # Specify format
+# @app.post("/summarize")
+# async def summarize(
+#     files_to_summarize: list[DocumentContents],
+#     preprocessor: Preprocessor,
+#     summarize_map_reduce: SummarizeMapReduce,
+#     api_key: str | None = Header(
+#         default=None,
+#         title="API key",
+#         description="API key for the summarization LLM. OpenAI is default",
+#     ),
+# ) -> SummarizationResult:
+
+#     if api_key is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Pass an API key for the summarization LLM. OpenAI is default",
+#         )
+
+#     try:
+#         input_files = filter_files(
+#             collection_digits=file_filter.collection_digits,
+#             dataset=DATASET_PATH,
+#             title_digits=file_filter.title_digits,
+#             file_format=DatasetFileFormatNames.HTML,
+#         )
+
+#         preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
+#             input_files,
+#             PARSE_FNS["markdownify_html_to_md"],
+#             preprocessor.max_tokens_per_doc,
+#             preprocessor.metadata_to_include,
+#         )
+
+#         parsed_documents = await preprocessor
+
+#         if summarize_map_reduce.core_prompt is None:
+#             prompt = SummarizationTestPrompt.SIMPLE.value
+
+#         with get_openai_callback() as cb:
+#             summary = await map_reduce(
+#                 parsed_documents,
+#                 prompt,
+#                 summarize_map_reduce.collapse_prompt,
+#                 summarize_map_reduce.combine_prompt,
+#                 max_concurrency=summarize_map_reduce.max_concurrency,
+#                 iteration_limit=summarize_map_reduce.iteration_limit,
+#                 collapse_token_max=summarize_map_reduce.collapse_token_max,
+#             )
+#             usage_report = cb
+
+#         return SummarizationResult(
+#             status="success",
+#             summary=summary,
+#             usage_report=repr(usage_report),
+#         )
+
+#     except Exception as e:
+#         logger.error(e)
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Server error",
+#         )
 
 
 if __name__ == "__main__":
