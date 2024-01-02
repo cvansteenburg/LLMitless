@@ -339,9 +339,14 @@ def consolidate_lists(
 
 
 async def html_to_md_documents(
-    input_files, parse_fn, max_tokens_per_doc, metadata_to_include, **kwargs
+    input_files: list[Path] | list[DocumentContents], parse_fn, max_tokens_per_doc, metadata_to_include, **kwargs
 ) -> list[Document]:
-    parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
+    
+    if isinstance(input_files, list[Path]):
+        parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
+    else:
+        parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
+
     docs = sources_to_docs(parsed_input_files)
     sized_docs = split_large_docs(docs, count_tokens, max_tokens_per_doc)
 
