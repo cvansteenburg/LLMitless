@@ -144,6 +144,27 @@ class SummarizeMapReduce(BaseModel):
     )
 
 
+class InputDocFormat(StrEnum):
+    HTML = "html"
+    MARKDOWN = "markdown"
+    TEXT = "text"
+
+
+async def sum_parser_selector(input_doc_format: InputDocFormat):
+    match input_doc_format:
+        case InputDocFormat.HTML:
+            return PARSE_FNS["markdownify_html_to_md"]
+        case InputDocFormat.MARKDOWN:
+            return PARSE_FNS["passthrough"]
+        case InputDocFormat.TEXT:
+            return PARSE_FNS["passthrough"]
+        case _:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid input_doc_format",
+            )
+
+
 class SummarizationResult(BaseModel):
     status: str
     summary: str
@@ -214,27 +235,6 @@ async def summarize_from_disk(
         )
 
 
-class InputDocFormat(StrEnum):
-    HTML = "html"
-    MARKDOWN = "markdown"
-    TEXT = "text"
-
-
-async def sum_parser_selector(input_doc_format: InputDocFormat):
-    match input_doc_format:
-        case InputDocFormat.HTML:
-            return PARSE_FNS["markdownify_html_to_md"]
-        case InputDocFormat.MARKDOWN:
-            return PARSE_FNS["passthrough"]
-        case InputDocFormat.TEXT:
-            return PARSE_FNS["passthrough"]
-        case _:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid input_doc_format",
-            )
-
-
 @app.post("/summarize/{input_doc_format}")
 async def summarize(
     input_doc_format: InputDocFormat,
@@ -252,18 +252,16 @@ async def summarize(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
         )
-    
+
     parser = await sum_parser_selector(input_doc_format)
 
     try:
-        preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
+        parsed_documents = await transform_raw_docs(
             docs_to_summarize,
             parser,
             preprocessor.max_tokens_per_doc,
             preprocessor.metadata_to_include,
         )
-
-        parsed_documents = await preprocessor
 
         if summarize_map_reduce.core_prompt is None:
             prompt = SummarizationTestPrompt.SIMPLE.value
@@ -278,6 +276,7 @@ async def summarize(
                 iteration_limit=summarize_map_reduce.iteration_limit,
                 collapse_token_max=summarize_map_reduce.collapse_token_max,
             )
+
             usage_report = cb
 
         return SummarizationResult(
