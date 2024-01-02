@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from enum import StrEnum
+from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Coroutine
 
@@ -17,6 +18,8 @@ from src.parsers.html_parse import (
     PARSE_FNS,
 )
 from src.services import output
+
+logger = getLogger(__name__)
 
 OUTPUT_PATH = Path(output.__path__[0]).resolve()
 
@@ -341,11 +344,15 @@ def consolidate_lists(
 async def html_to_md_documents(
     input_files: list[Path] | list[DocumentContents], parse_fn, max_tokens_per_doc, metadata_to_include, **kwargs
 ) -> list[Document]:
-    
-    if isinstance(input_files, list[Path]):
-        parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
-    else:
-        parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
+    try:
+        if isinstance(input_files[0], Path):
+            parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
+        else:
+            parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
+
+    except TypeError as e:
+        logger.error(f"Error parsing files in html_to_md_documents. TypeError {e}", exc_info=e)
+        raise TypeError("Expected a list of a single type as input")
 
     docs = sources_to_docs(parsed_input_files)
     sized_docs = split_large_docs(docs, count_tokens, max_tokens_per_doc)
@@ -398,12 +405,16 @@ if __name__ == "__main__":
     ITERATION_LIMIT = 3
     METADATA_TO_INCLUDE = ["title"]  # metadata visible to llm in combined docs
 
-    input_files = filter_files(
-        collection_digits="002",
-        dataset=DATASET_PATH,
-        title_digits=["005", "006", "007"],
-        file_format=DatasetFileFormatNames.HTML,
-    )
+    # input_files = filter_files(
+    #     collection_digits="002",
+    #     dataset=DATASET_PATH,
+    #     title_digits=["005", "006", "007"],
+    #     file_format=DatasetFileFormatNames.HTML,
+    # )
+
+    # RAW DATA INPUT
+    from datasets import raw_data
+    input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
 
     preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
         input_files,
@@ -414,9 +425,6 @@ if __name__ == "__main__":
 
     parsed_documents = asyncio.run(preprocessor)
 
-    # RAW DATA INPUT
-    # from datasets import raw_data
-    # input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
 
     # # PRINT PARSER OUTPUT
     # print(parsed_documents)
