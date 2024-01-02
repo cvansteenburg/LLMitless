@@ -343,7 +343,8 @@ def consolidate_lists(
     return collapsed_docs
 
 
-async def html_to_md_documents(
+# TODO: move typeerror check to parse_files fns
+async def transform_raw_docs(
     input_files: list[Path] | list[DocumentContents],
     parse_fn: Callable[[str, Any], str],
     max_tokens_per_doc: int,
@@ -425,7 +426,7 @@ if __name__ == "__main__":
 
     input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
 
-    preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
+    preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
         input_files,
         PARSE_FNS["markdownify_html_to_md"],
         MAX_TOKENS_PER_DOC,
