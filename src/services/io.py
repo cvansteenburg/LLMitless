@@ -1,13 +1,17 @@
 import asyncio
+import os
 from datetime import datetime
 from enum import StrEnum
+from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Coroutine, TypedDict
+from typing import Any, Callable, Coroutine
 
 import tiktoken
+from dotenv import load_dotenv
 from langchain.callbacks import get_openai_callback
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
 
 import datasets
 from src.models.dataset_model import DatasetFileFormatNames
@@ -16,6 +20,10 @@ from src.parsers.html_parse import (
     PARSE_FNS,
 )
 from src.services import output
+
+load_dotenv()
+
+logger = getLogger(__name__)
 
 OUTPUT_PATH = Path(output.__path__[0]).resolve()
 
@@ -47,14 +55,24 @@ def count_tokens(
         )
 
 
-class SourceDict(TypedDict):
-    content: str
-    metadata: dict | None  # may need to further constrain to string keys
+class DocumentContents(BaseModel):
+    """Class for storing a piece of text and associated metadata."""
+
+    page_content: str = Field(
+        ..., title="Page content", description="Content to summarize"
+    )
+    metadata: dict | None = Field(
+        title="Metadata",
+        description=(
+            "Arbitrary metadata about the page content (e.g., source, relationships to"
+            " other documents, etc.)."
+        ),
+    )
 
 
-def sources_to_docs(sources: list[SourceDict]) -> list[Document]:
+def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     return [
-        Document(page_content=source["content"], metadata=source["metadata"])
+        Document(page_content=source.page_content, metadata=source.metadata)
         for source in sources
     ]
 
@@ -178,7 +196,7 @@ def read_file_content(file_path: Path) -> str:
         return content_file.read()
 
 
-def parse_files(
+def parse_files_from_paths(
     input_file_paths: list[Path],
     parse_function: Callable[[str, Any], str] = (lambda x: x),
     *,
@@ -188,7 +206,7 @@ def parse_files(
     output_base_name: str = "combined",
     output_format: str = "txt",
     **kwargs: Any,
-) -> list[SourceDict] | None:
+) -> list[DocumentContents] | None:
     """
     Reads files from disk, parses them using the provided parse_function, and optionally
     writes them to disk and/or returns them. return_docs and write_to_file cannot both be False.
@@ -207,25 +225,49 @@ def parse_files(
         with open(output_file_path, "x") as output_file:
 
             for file_path in input_file_paths:
-                title_name = f"{file_path.parent.name}/{file_path.name}"
-                content = read_file_content(file_path)
-                parsed_content = parse_function(content, **kwargs)
-                output_file.write(f"Title: {title_name}\n{parsed_content}\n\n")
+                _title_name = f"{file_path.parent.name}/{file_path.name}"
+                _metadata = {"title": f"{_title_name}"}
+                _content = read_file_content(file_path)
+                _parsed_content: str = parse_function(_content, **kwargs)
+                output_file.write(f"DOC: {_title_name}\n{_parsed_content}\n\n")
                 if return_docs:
-                    docs.append({
-                        "content": parsed_content,
-                        "metadata": {"title": title_name},
-                    })
+                    docs.append(
+                        DocumentContents(
+                            page_content=_parsed_content, metadata=_metadata
+                        )
+                    )
 
     else:
         for file_path in input_file_paths:
-            title_name = f"{file_path.parent.name}/{file_path.name}"
-            content = read_file_content(file_path)
-            parsed_content = parse_function(content, **kwargs)
-            docs.append({
-                "content": parsed_content,
-                "metadata": {"title": title_name},
-            })
+            _title_name = f"{file_path.parent.name}/{file_path.name}"
+            _metadata = {"title": f"{_title_name}"}
+            _content = read_file_content(file_path)
+            _parsed_content: str = parse_function(_content, **kwargs)
+            docs.append(
+                DocumentContents(page_content=_parsed_content, metadata=_metadata)
+            )
+
+    return docs
+
+
+def parse_files(
+    input_files: list[DocumentContents],
+    parse_function: Callable[[str, Any], str] = (lambda x: x),
+    **kwargs: Any,
+) -> list[DocumentContents] | None:
+    """
+    Parses files using the provided parse_function.
+    output_format should match output format of chosen parse_function
+    """
+    docs = []
+    _file_count = 0
+    for file in input_files:
+        _file_count += 1
+        _metadata = (
+            file.metadata if file.metadata else {"title": f"Doc num {_file_count}"}
+        )
+        _parsed_content = parse_function(file.page_content, **kwargs)
+        docs.append(DocumentContents(page_content=_parsed_content, metadata=_metadata))
 
     return docs
 
@@ -305,10 +347,26 @@ def consolidate_lists(
     return collapsed_docs
 
 
-async def html_to_md_documents(
-    input_files, parse_fn, max_tokens_per_doc, metadata_to_include, **kwargs
+# TODO: move typeerror check to parse_files fns
+async def transform_raw_docs(
+    input_files: list[Path] | list[DocumentContents],
+    parse_fn: Callable[[str, Any], str],
+    max_tokens_per_doc: int,
+    metadata_to_include: list[str],
+    **kwargs,
 ) -> list[Document]:
-    parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
+    try:
+        if isinstance(input_files[0], Path):
+            parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
+        else:
+            parsed_input_files = parse_files(input_files, parse_fn, **kwargs)
+
+    except TypeError as e:
+        logger.error(
+            f"Error parsing files in html_to_md_documents. TypeError {e}", exc_info=e
+        )
+        raise TypeError("Expected a list of a single type as input")
+
     docs = sources_to_docs(parsed_input_files)
     sized_docs = split_large_docs(docs, count_tokens, max_tokens_per_doc)
 
@@ -360,14 +418,19 @@ if __name__ == "__main__":
     ITERATION_LIMIT = 3
     METADATA_TO_INCLUDE = ["title"]  # metadata visible to llm in combined docs
 
-    input_files = filter_files(
-        collection_digits="002",
-        dataset=DATASET_PATH,
-        title_digits=["005"],
-        file_format=DatasetFileFormatNames.HTML,
-    )
+    # input_files = filter_files(
+    #     collection_digits="002",
+    #     dataset=DATASET_PATH,
+    #     title_digits=["005", "006", "007"],
+    #     file_format=DatasetFileFormatNames.HTML,
+    # )
 
-    preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
+    # RAW DATA INPUT
+    from datasets import raw_data
+
+    input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
+
+    preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
         input_files,
         PARSE_FNS["markdownify_html_to_md"],
         MAX_TOKENS_PER_DOC,
@@ -399,5 +462,15 @@ if __name__ == "__main__":
     prompt = SummarizationTestPrompt.SIMPLE.value
 
     with get_openai_callback() as cb:
-        asyncio.run(map_reduce(parsed_documents, prompt))
+        asyncio.run(
+            map_reduce(
+                parsed_documents,
+                prompt,
+                api_key=os.getenv("OPENAI_API_KEY"),
+                organization="someorg",
+                temperature=0.1,
+                max_concurrency=1,
+                collapse_token_max=3000,
+            )
+        )
         print(f"\n\n{cb}")

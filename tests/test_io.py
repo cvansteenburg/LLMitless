@@ -8,7 +8,7 @@ import time_machine
 from src.models.dataset_model import DatasetFileFormatNames
 from src.services.io import (
     filter_files,
-    parse_files,
+    parse_files_from_paths,
     read_file_content,
 )
 from tests import dataset_for_testing
@@ -104,7 +104,7 @@ def test_parse_files(tmp_path, input_files):
         
         mock_read.side_effect = lambda x: f"READ {x}"
         
-        parse_files(
+        parse_files_from_paths(
             input_file_paths=input_files,
             parse_function=lambda content, **kwargs: f"Parsed {content}",
             output_path=tmp_path,
