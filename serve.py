@@ -1,6 +1,6 @@
 import os
 from enum import StrEnum
-from typing import Any, Coroutine
+from typing import Annotated, Any, Coroutine
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, status
@@ -144,11 +144,6 @@ class SummarizeMapReduce(BaseModel):
 
 
 class UserLLMConfig(BaseModel):
-    api_key: str | None = Header(
-        ...,
-        title="API key",
-        description="API key for the LLM. Default LLM is OpenAI",
-    ),
     organization: str | None = Field(
         default=None,
         title="Organization",
@@ -194,6 +189,11 @@ class SummarizationResult(BaseModel):
 
 @app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents")
 async def summarize(
+    api_key: Annotated[str, Header(
+        ...,
+        title="API key",
+        description="API key for the LLM. Default LLM is OpenAI",
+    )],
     input_doc_format: InputDocFormat,
     docs_to_summarize: list[DocumentContents],
     preprocessor: Preprocessor,
@@ -204,7 +204,7 @@ async def summarize(
     Summarize a list of documents. Input doc format can be html, markdown, or text, but
     docs all must be of the same format.
     """
-    if llm_config.api_key is None:
+    if api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
@@ -229,7 +229,7 @@ async def summarize(
                 prompt,
                 summarize_map_reduce.collapse_prompt,
                 summarize_map_reduce.combine_prompt,
-                api_key=llm_config.api_key,
+                api_key=api_key,
                 organization=llm_config.organization,
                 model=llm_config.model,
                 temperature=llm_config.temperature,
@@ -257,6 +257,11 @@ async def summarize(
      
 @app.post("/summarize_from_disk")
 async def summarize_from_disk(
+    api_key: Annotated[str, Header(
+        ...,
+        title="API key",
+        description="API key for the LLM. Default LLM is OpenAI",
+    )],
     file_filter: FileFilter,
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
@@ -265,7 +270,7 @@ async def summarize_from_disk(
     """
     Select and summarize a subset of files from a dataset on the server.
     """
-    if llm_config.api_key is None:
+    if api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
@@ -297,7 +302,7 @@ async def summarize_from_disk(
                 prompt,
                 summarize_map_reduce.collapse_prompt,
                 summarize_map_reduce.combine_prompt,
-                api_key=llm_config.api_key,
+                api_key=api_key,
                 organization=llm_config.organization,
                 model=llm_config.model,
                 temperature=llm_config.temperature,
