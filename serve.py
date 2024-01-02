@@ -1,4 +1,5 @@
 import os
+from enum import StrEnum
 from typing import Any, Coroutine
 
 from dotenv import load_dotenv
@@ -16,7 +17,7 @@ from src.services.io import (
     DocumentContents,
     SummarizationTestPrompt,
     filter_files,
-    html_to_md_documents,
+    transform_raw_docs,
 )
 from src.utils.logging_init import init_logging
 
@@ -175,7 +176,7 @@ async def summarize_from_disk(
             file_format=DatasetFileFormatNames.HTML,
         )
 
-        preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
+        preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
             input_files,
             PARSE_FNS["markdownify_html_to_md"],
             preprocessor.max_tokens_per_doc,
@@ -213,11 +214,31 @@ async def summarize_from_disk(
         )
 
 
-# TODO: Add support for md, and txt
-# Specify format
-@app.post("/summarize")
+class InputDocFormat(StrEnum):
+    HTML = "html"
+    MARKDOWN = "markdown"
+    TEXT = "text"
+
+
+async def sum_parser_selector(input_doc_format: InputDocFormat):
+    match input_doc_format:
+        case InputDocFormat.HTML:
+            return PARSE_FNS["markdownify_html_to_md"]
+        case InputDocFormat.MARKDOWN:
+            return PARSE_FNS["passthrough"]
+        case InputDocFormat.TEXT:
+            return PARSE_FNS["passthrough"]
+        case _:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid input_doc_format",
+            )
+
+
+@app.post("/summarize/{input_doc_format}")
 async def summarize(
-    files_to_summarize: list[DocumentContents],
+    input_doc_format: InputDocFormat,
+    docs_to_summarize: list[DocumentContents],
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
     api_key: str | None = Header(
@@ -226,17 +247,18 @@ async def summarize(
         description="API key for the summarization LLM. OpenAI is default",
     ),
 ) -> SummarizationResult:
-
     if api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
         )
+    
+    parser = await sum_parser_selector(input_doc_format)
 
     try:
-        preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
-            files_to_summarize,
-            PARSE_FNS["markdownify_html_to_md"],
+        preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
+            docs_to_summarize,
+            parser,
             preprocessor.max_tokens_per_doc,
             preprocessor.metadata_to_include,
         )

@@ -1,5 +1,4 @@
 import re
-from functools import partial
 from types import MappingProxyType
 
 from bs4 import BeautifulSoup as soup
@@ -76,11 +75,16 @@ def markdownify_html_to_md(html_body: str) -> str:
 
     return md_text
 
+def string_input_passthrough(input: str) -> str:
+    return input
 
+
+# NOTE: Fns must take only one arg for use in LLM chains. If more are needed, use partial
 _parse_fns = {
-    "unstructured_HTML_to_text": partial(unstructured_html_to_text),
-    "bs_html_to_text": partial(bs_html_to_text),
-    "markdownify_html_to_md": partial(markdownify_html_to_md),
+    "unstructured_HTML_to_text": unstructured_html_to_text,
+    "bs_html_to_text": bs_html_to_text,
+    "markdownify_html_to_md": markdownify_html_to_md,
+    "passthrough": string_input_passthrough,
 }
 
 PARSE_FNS = MappingProxyType(_parse_fns)
