@@ -65,7 +65,7 @@ class DocumentContents(BaseModel):
 
 def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     return [
-        Document(page_content=source["content"], metadata=source["metadata"])
+        Document(page_content=source.page_content, metadata=source.metadata)
         for source in sources
     ]
 
@@ -218,31 +218,34 @@ def parse_files_from_paths(
         with open(output_file_path, "x") as output_file:
 
             for file_path in input_file_paths:
-                title_name = f"{file_path.parent.name}/{file_path.name}"
-                content = read_file_content(file_path)
-                parsed_content = parse_function(content, **kwargs)
-                output_file.write(f"Title: {title_name}\n{parsed_content}\n\n")
+                _title_name = f"{file_path.parent.name}/{file_path.name}"
+                _metadata = {"title": f"{_title_name}"}
+                _content = read_file_content(file_path)
+                _parsed_content: str = parse_function(_content, **kwargs)
+                output_file.write(f"DOC: {_title_name}\n{_parsed_content}\n\n")
                 if return_docs:
-                    docs.append({
-                        "content": parsed_content,
-                        "metadata": {"title": title_name},
-                    })
+                    docs.append(
+                        DocumentContents(
+                            page_content=_parsed_content, metadata=_metadata
+                        )
+                    )
 
     else:
         for file_path in input_file_paths:
-            title_name = f"{file_path.parent.name}/{file_path.name}"
-            content = read_file_content(file_path)
-            parsed_content = parse_function(content, **kwargs)
-            docs.append({
-                "content": parsed_content,
-                "metadata": {"title": title_name},
-            })
+            _title_name = f"{file_path.parent.name}/{file_path.name}"
+            _metadata = {"title": f"{_title_name}"}
+            _content = read_file_content(file_path)
+            _parsed_content: str = parse_function(_content, **kwargs)
+            docs.append(
+                DocumentContents(page_content=_parsed_content, metadata=_metadata)
+            )
 
     return docs
 
 
+# Leaving write-to-disk functionality in case we'd like it
 # def parse_files(
-#     input_file_paths: list[Path],
+#     input_files: list[DocumentContents],
 #     parse_function: Callable[[str, Any], str] = (lambda x: x),
 #     *,
 #     return_docs: bool = True,
@@ -251,10 +254,10 @@ def parse_files_from_paths(
 #     output_base_name: str = "combined",
 #     output_format: str = "txt",
 #     **kwargs: Any,
-# ) -> list[SourceDict] | None:
+# ) -> list[DocumentContents] | None:
 #     """
-#     Reads files from disk, parses them using the provided parse_function, and optionally
-#     writes them to disk and/or returns them. return_docs and write_to_file cannot both be False.
+#     Parses files, writes them to disk and/or returns them.
+#     return_docs and write_to_file cannot both be False.
 #     """
 #     if not (return_docs or write_to_file):
 #         raise ValueError("Either return_docs or write_to_file must be True.")
@@ -269,19 +272,17 @@ def parse_files_from_paths(
 #     if write_to_file:
 #         with open(output_file_path, "x") as output_file:
 
-#             for file_path in input_file_paths:
-#                 title_name = f"{file_path.parent.name}/{file_path.name}"
-#                 content = read_file_content(file_path)
-#                 parsed_content = parse_function(content, **kwargs)
-#                 output_file.write(f"Title: {title_name}\n{parsed_content}\n\n")
+#             _file_count = 0
+#             for file in input_files:
+#                 _file_count += 1
+#                 _metadata = file.metadata if file.metadata else {"title": f"Doc num {_file_count}"}
+#                 parsed_content = parse_function(file.page_content, **kwargs)
+#                 output_file.write(f"DOC: {_metadata}\n{parsed_content}\n\n")
 #                 if return_docs:
-#                     docs.append({
-#                         "content": parsed_content,
-#                         "metadata": {"title": title_name},
-#                     })
+#                     docs.append(DocumentContents(page_content=parsed_content, metadata=_metadata))
 
 #     else:
-#         for file_path in input_file_paths:
+#         for file in input_files:
 #             title_name = f"{file_path.parent.name}/{file_path.name}"
 #             content = read_file_content(file_path)
 #             parsed_content = parse_function(content, **kwargs)
