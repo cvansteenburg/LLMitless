@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 from enum import StrEnum
 from logging import getLogger
@@ -6,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Coroutine
 
 import tiktoken
+from dotenv import load_dotenv
 from langchain.callbacks import get_openai_callback
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain_core.documents import Document
@@ -18,6 +20,8 @@ from src.parsers.html_parse import (
     PARSE_FNS,
 )
 from src.services import output
+
+load_dotenv()
 
 logger = getLogger(__name__)
 
@@ -458,5 +462,15 @@ if __name__ == "__main__":
     prompt = SummarizationTestPrompt.SIMPLE.value
 
     with get_openai_callback() as cb:
-        asyncio.run(map_reduce(parsed_documents, prompt))
+        asyncio.run(
+            map_reduce(
+                parsed_documents,
+                prompt,
+                api_key=os.getenv("OPENAI_API_KEY"),
+                organization="someorg",
+                temperature=0.1,
+                max_concurrency=1,
+                collapse_token_max=3000,
+            )
+        )
         print(f"\n\n{cb}")
