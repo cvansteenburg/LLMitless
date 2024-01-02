@@ -45,12 +45,6 @@ async def root():
     return {"message": "Hello World"}
 
 
-# Summarize
-# Specify format
-
-# PLACEHOLDER. May later want to include... system_prompt: Annotated[str | None, Field(title="system prompt", description="Provides a role, context, and instructions for the LLM. This is a string with brackets around template variables. Must include {core_prompt}")] = None,
-
-
 class FileFilter(BaseModel):
     collection_digits: str = Field(
         ...,
@@ -121,6 +115,7 @@ class SummarizeMapReduce(BaseModel):
             " {context} wherever the list of summaries to combine will be inserted."
         ),
     )
+    # PLACEHOLDER. May later want to include... system_prompt: Annotated[str | None, Field(title="system prompt", description="Provides a role, context, and instructions for the LLM. This is a string with brackets around template variables. Must include {core_prompt}")] = None,
     max_concurrency: int = Field(
         default=3,
         title="Max concurrency",
@@ -147,6 +142,12 @@ class SummarizeMapReduce(BaseModel):
     )
 
 
+class SummarizationResult(BaseModel):
+    status: str
+    summary: str
+    usage_report: str
+
+
 @app.post("/summarize_from_disk")
 async def summarize_from_disk(
     file_filter: FileFilter,
@@ -157,7 +158,7 @@ async def summarize_from_disk(
         title="API key",
         description="API key for the summarization LLM. OpenAI is default",
     ),
-) -> dict[str, str]:
+) -> SummarizationResult:
 
     if api_key is None:
         raise HTTPException(
@@ -197,14 +198,22 @@ async def summarize_from_disk(
             )
             usage_report = cb
 
-        return {"status": "success", "results": summary, "usage": usage_report}
+        return SummarizationResult(
+            status="success",
+            summary=summary,
+            usage_report=repr(usage_report),
+        )
 
     except Exception as e:
         logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Server error",
+            detail=f"Server error - {e}",
         )
+
+
+# TODO: Summarize endpoint
+# Specify format
 
 
 if __name__ == "__main__":
