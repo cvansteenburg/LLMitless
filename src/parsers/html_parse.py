@@ -75,6 +75,7 @@ def markdownify_html_to_md(html_body: str) -> str:
 
     return md_text
 
+
 def string_input_passthrough(input: str) -> str:
     return input
 

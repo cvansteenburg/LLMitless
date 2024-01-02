@@ -125,7 +125,9 @@ async def _collapse(
 ):
     collapse_ct = 1
 
-    collapse_token_max = config["token_max"] if "token_max" in config else collapse_token_max
+    collapse_token_max = (
+        config["token_max"] if "token_max" in config else collapse_token_max
+    )
     iteration_limit = (
         config["iteration_limit"] if "iteration_limit" in config else iteration_limit
     )
