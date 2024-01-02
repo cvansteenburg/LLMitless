@@ -1,5 +1,6 @@
 import os
-from typing import Any, Coroutine
+from enum import StrEnum
+from typing import Annotated, Any, Coroutine
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, status
@@ -13,9 +14,10 @@ from src.models.dataset_model import DatasetFileFormatNames
 from src.parsers.html_parse import PARSE_FNS
 from src.services.io import (
     DATASET_PATH,
+    DocumentContents,
     SummarizationTestPrompt,
     filter_files,
-    html_to_md_documents,
+    transform_raw_docs,
 )
 from src.utils.logging_init import init_logging
 
@@ -115,7 +117,6 @@ class SummarizeMapReduce(BaseModel):
             " {context} wherever the list of summaries to combine will be inserted."
         ),
     )
-    # PLACEHOLDER. May later want to include... system_prompt: Annotated[str | None, Field(title="system prompt", description="Provides a role, context, and instructions for the LLM. This is a string with brackets around template variables. Must include {core_prompt}")] = None,
     max_concurrency: int = Field(
         default=3,
         title="Max concurrency",
@@ -142,24 +143,133 @@ class SummarizeMapReduce(BaseModel):
     )
 
 
+class UserLLMConfig(BaseModel):
+    organization: str | None = Field(
+        default=None,
+        title="Organization",
+        description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization.",
+    ),
+    model: str | None = Field(
+        default=None,
+        title="Model name",
+        description="The model to use for LLM calls. If not specified, defaults to gpt-3.5-turbo"
+    ),
+    temperature: float | None = Field(
+        default=None,
+        title="Temperature",
+        description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
+    )
+
+class InputDocFormat(StrEnum):
+    HTML = "html"
+    MARKDOWN = "markdown"
+    TEXT = "text"
+
+
+async def sum_parser_selector(input_doc_format: InputDocFormat):
+    match input_doc_format:
+        case InputDocFormat.HTML:
+            return PARSE_FNS["markdownify_html_to_md"]
+        case InputDocFormat.MARKDOWN:
+            return PARSE_FNS["passthrough"]
+        case InputDocFormat.TEXT:
+            return PARSE_FNS["passthrough"]
+        case _:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid input_doc_format",
+            )
+
+
 class SummarizationResult(BaseModel):
     status: str
     summary: str
     usage_report: str
 
 
+@app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents")
+async def summarize(
+    api_key: Annotated[str, Header(
+        ...,
+        title="API key",
+        description="API key for the LLM. Default LLM is OpenAI",
+    )],
+    input_doc_format: InputDocFormat,
+    docs_to_summarize: list[DocumentContents],
+    preprocessor: Preprocessor,
+    summarize_map_reduce: SummarizeMapReduce,
+    llm_config: UserLLMConfig,
+) -> SummarizationResult:
+    """
+    Summarize a list of documents. Input doc format can be html, markdown, or text, but
+    docs all must be of the same format.
+    """
+    if api_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Pass an API key for the summarization LLM. OpenAI is default",
+        )
+
+    parser = await sum_parser_selector(input_doc_format)
+
+    try:
+        parsed_documents = await transform_raw_docs(
+            docs_to_summarize,
+            parser,
+            preprocessor.max_tokens_per_doc,
+            preprocessor.metadata_to_include,
+        )
+
+        if summarize_map_reduce.core_prompt is None:
+            prompt = SummarizationTestPrompt.SIMPLE.value
+
+        with get_openai_callback() as cb:
+            summary = await map_reduce(
+                parsed_documents,
+                prompt,
+                summarize_map_reduce.collapse_prompt,
+                summarize_map_reduce.combine_prompt,
+                api_key=api_key,
+                organization=llm_config.organization,
+                model=llm_config.model,
+                temperature=llm_config.temperature,
+                max_concurrency=summarize_map_reduce.max_concurrency,
+                iteration_limit=summarize_map_reduce.iteration_limit,
+                collapse_token_max=summarize_map_reduce.collapse_token_max,
+            )
+
+            usage_report = cb
+
+        return SummarizationResult(
+            status="success",
+            summary=summary,
+            usage_report=repr(usage_report),
+        )
+
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server error",
+        )
+
+
+     
 @app.post("/summarize_from_disk")
 async def summarize_from_disk(
+    api_key: Annotated[str, Header(
+        ...,
+        title="API key",
+        description="API key for the LLM. Default LLM is OpenAI",
+    )],
     file_filter: FileFilter,
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
-    api_key: str | None = Header(
-        default=None,
-        title="API key",
-        description="API key for the summarization LLM. OpenAI is default",
-    ),
+    llm_config: UserLLMConfig,
 ) -> SummarizationResult:
-
+    """
+    Select and summarize a subset of files from a dataset on the server.
+    """
     if api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -174,7 +284,7 @@ async def summarize_from_disk(
             file_format=DatasetFileFormatNames.HTML,
         )
 
-        preprocessor: Coroutine[Any, Any, list[Document]] = html_to_md_documents(
+        preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
             input_files,
             PARSE_FNS["markdownify_html_to_md"],
             preprocessor.max_tokens_per_doc,
@@ -192,6 +302,10 @@ async def summarize_from_disk(
                 prompt,
                 summarize_map_reduce.collapse_prompt,
                 summarize_map_reduce.combine_prompt,
+                api_key=api_key,
+                organization=llm_config.organization,
+                model=llm_config.model,
+                temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
                 iteration_limit=summarize_map_reduce.iteration_limit,
                 collapse_token_max=summarize_map_reduce.collapse_token_max,
@@ -208,12 +322,8 @@ async def summarize_from_disk(
         logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Server error - {e}",
+            detail="Server error",
         )
-
-
-# TODO: Summarize endpoint
-# Specify format
 
 
 if __name__ == "__main__":
