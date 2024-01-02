@@ -171,6 +171,68 @@ class SummarizationResult(BaseModel):
     usage_report: str
 
 
+@app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents")
+async def summarize(
+    input_doc_format: InputDocFormat,
+    docs_to_summarize: list[DocumentContents],
+    preprocessor: Preprocessor,
+    summarize_map_reduce: SummarizeMapReduce,
+    api_key: str | None = Header(
+        default=None,
+        title="API key",
+        description="API key for the summarization LLM. OpenAI is default",
+    ),
+) -> SummarizationResult:
+    """
+    Summarize a list of documents. Input doc format can be html, markdown, or text, but
+    docs all must be of the same format.
+    """
+    if api_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Pass an API key for the summarization LLM. OpenAI is default",
+        )
+
+    parser = await sum_parser_selector(input_doc_format)
+
+    try:
+        parsed_documents = await transform_raw_docs(
+            docs_to_summarize,
+            parser,
+            preprocessor.max_tokens_per_doc,
+            preprocessor.metadata_to_include,
+        )
+
+        if summarize_map_reduce.core_prompt is None:
+            prompt = SummarizationTestPrompt.SIMPLE.value
+
+        with get_openai_callback() as cb:
+            summary = await map_reduce(
+                parsed_documents,
+                prompt,
+                summarize_map_reduce.collapse_prompt,
+                summarize_map_reduce.combine_prompt,
+                max_concurrency=summarize_map_reduce.max_concurrency,
+                iteration_limit=summarize_map_reduce.iteration_limit,
+                collapse_token_max=summarize_map_reduce.collapse_token_max,
+            )
+
+            usage_report = cb
+
+        return SummarizationResult(
+            status="success",
+            summary=summary,
+            usage_report=repr(usage_report),
+        )
+
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server error",
+        )
+
+
 @app.post("/summarize_from_disk")
 async def summarize_from_disk(
     file_filter: FileFilter,
@@ -182,7 +244,9 @@ async def summarize_from_disk(
         description="API key for the summarization LLM. OpenAI is default",
     ),
 ) -> SummarizationResult:
-
+    """
+    Select and summarize a subset of files from a dataset on the server.
+    """
     if api_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -219,64 +283,6 @@ async def summarize_from_disk(
                 iteration_limit=summarize_map_reduce.iteration_limit,
                 collapse_token_max=summarize_map_reduce.collapse_token_max,
             )
-            usage_report = cb
-
-        return SummarizationResult(
-            status="success",
-            summary=summary,
-            usage_report=repr(usage_report),
-        )
-
-    except Exception as e:
-        logger.error(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Server error",
-        )
-
-
-@app.post("/summarize/{input_doc_format}")
-async def summarize(
-    input_doc_format: InputDocFormat,
-    docs_to_summarize: list[DocumentContents],
-    preprocessor: Preprocessor,
-    summarize_map_reduce: SummarizeMapReduce,
-    api_key: str | None = Header(
-        default=None,
-        title="API key",
-        description="API key for the summarization LLM. OpenAI is default",
-    ),
-) -> SummarizationResult:
-    if api_key is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Pass an API key for the summarization LLM. OpenAI is default",
-        )
-
-    parser = await sum_parser_selector(input_doc_format)
-
-    try:
-        parsed_documents = await transform_raw_docs(
-            docs_to_summarize,
-            parser,
-            preprocessor.max_tokens_per_doc,
-            preprocessor.metadata_to_include,
-        )
-
-        if summarize_map_reduce.core_prompt is None:
-            prompt = SummarizationTestPrompt.SIMPLE.value
-
-        with get_openai_callback() as cb:
-            summary = await map_reduce(
-                parsed_documents,
-                prompt,
-                summarize_map_reduce.collapse_prompt,
-                summarize_map_reduce.combine_prompt,
-                max_concurrency=summarize_map_reduce.max_concurrency,
-                iteration_limit=summarize_map_reduce.iteration_limit,
-                collapse_token_max=summarize_map_reduce.collapse_token_max,
-            )
-
             usage_report = cb
 
         return SummarizationResult(
