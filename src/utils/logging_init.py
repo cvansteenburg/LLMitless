@@ -19,5 +19,5 @@ def init_logging(config_file: str):
         logging.log(logging.WARNING, f"No logging configuration found in {config_file}")
         print(f"No logging configuration found in {config_file}")
 
-    logger = logging.getLogger("briefly") #keep as package name for config propogation
+    logger = logging.getLogger("llm_testbed") #keep as package name for config propogation
     return logger
