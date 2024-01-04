@@ -2,7 +2,7 @@
 
 ### Build, test, and deploy LLM chains
 
-Simple scaffolding, testbed, and API for building, testing, and deployment of LLM chains.  
+Simple scaffolding, testbed, and API endpoints for building, testing, and deploying LLM chains.  
 Supports local files, as well as those passed in directly or via API calls.
 
 ** consider experimental and unstable **
