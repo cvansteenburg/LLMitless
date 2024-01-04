@@ -1,12 +1,15 @@
-# LLM Testbed
-** consider experimental and unstable **
+# LLMitless
 
-Basic scaffolding / testbed for building LLM chains and testing.
+### Build, test, and deploy LLM chains
+
+Simple scaffolding, testbed, and API for building, testing, and deployment of LLM chains.  
 Supports local files, as well as those passed in directly or via API calls.
+
+** consider experimental and unstable **
 
 ## Setup
 - Install dependencies via poetry.
-- Add a '.env' file with your api keys (wandb, openai, etc)
+- Add a `.env` file with your api keys (wandb, openai, etc)
 - Use datasets_sample as a template for the hierarchy of local files for use with chains. Best numbered and laid out in the format shown in `datasets_sample`
 - Set a port in `serve.py`, open the port (using ngrok, for example), and run `serve.py`.
 - LLM_testbed uses FastAPI: once running, you can find documentation and make test calls by visiting /docs
