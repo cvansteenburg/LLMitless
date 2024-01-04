@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "langchain-sandbox"
+name = "LLMitless"
 version = "0.1.0"
 description = ""
 authors = ["Chase VanSteenburg <cvansteenburg@gmail.com>"]
@@ -51,22 +51,22 @@ ignore_missing_imports = true
 module = "unstructured.*"
 ignore_missing_imports = true
 
-[tool.llm_testbed.logging]
+[tool.LLMitless.logging]
 version = 1
 
-[tool.llm_testbed.logging.formatters.simple]
+[tool.LLMitless.logging.formatters.simple]
 format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-[tool.llm_testbed.logging.handlers.file_handler]
+[tool.LLMitless.logging.handlers.file_handler]
 class = "logging.handlers.TimedRotatingFileHandler"
 level = "DEBUG"
 formatter = "simple"
-filename = "logs/llm_testbed.log"
+filename = "logs/LLMitless.log"
 when = "D"
 interval = 1
 backupCount = 7
 
-[tool.llm_testbed.logging.loggers.llm_testbed]
+[tool.LLMitless.logging.loggers.LLMitless]
 level = "DEBUG"
 handlers = ["file_handler"]
 propagate = true
