@@ -67,7 +67,7 @@ COPY poetry.lock pyproject.toml ./
 
 # install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
 RUN --mount=type=cache,target=/root/.cache \
-    poetry install --without=dev
+    poetry install --without=dev --no-root
 
 
 ################################
@@ -82,9 +82,14 @@ WORKDIR $PYSETUP_PATH
 COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 
+RUN apt-get update \
+    && apt-get install -y git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # quicker install as runtime deps are already installed
 RUN --mount=type=cache,target=/root/.cache \
-    poetry install --with=dev
+    poetry install --with=dev --no-root
 
 # will become mountpoint of our code
 WORKDIR /LLMitless
