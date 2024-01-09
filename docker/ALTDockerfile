@@ -4,7 +4,7 @@
 # Keep this syntax directive! It's used to enable Docker BuildKit
 
 # Based on https://github.com/python-poetry/poetry/discussions/1879?sort=top#discussioncomment-216865
-# but I try to keep it updated (see history)
+# and https://nanmu.me/en/posts/2023/quick-dockerfile-for-python-poetry-projects/
 
 ################################
 # PYTHON-BASE
@@ -26,21 +26,17 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_VERSION=1.6.1 \
     # make poetry install to this location
     POETRY_HOME="/opt/poetry" \
-    # make poetry create the virtual environment in the project's root
-    # it gets named `.venv`
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
     # do not ask any interactive question
-    POETRY_NO_INTERACTION=1 \
-    \
+    POETRY_NO_INTERACTION=1
+    # \
     # paths
-    # this is where our requirements + virtual environment will live
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+    # # this is where our requirements + virtual environment will live
+    # PYSETUP_PATH="/opt/pysetup" \
+    # VENV_PATH="/opt/pysetup/.venv"
 
 
-# prepend poetry and venv to path
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+# # prepend poetry and venv to path
+# ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
 
 ################################
@@ -51,7 +47,7 @@ FROM python-base as builder-base
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         # deps for installing poetry
-        curl \
+        # curl \
         # deps for building python deps
         build-essential
 
@@ -59,8 +55,13 @@ RUN apt-get update \
 # This installs poetry to $POETRY_HOME
 # The --mount will mount the buildx cache directory to where 
 # Poetry and Pip store their cache so that they can re-use it
-RUN --mount=type=cache,target=/root/.cache \
-    curl -sSL https://install.python-poetry.org | python3 -
+# RUN --mount=type=cache,target=/root/.cache \
+#     curl -sSL https://install.python-poetry.org | python3 -
+
+# https://python-poetry.org/docs/#installing-manually
+RUN python -m venv ${POETRY_HOME}
+RUN ${POETRY_HOME}/bin/pip install -U pip setuptools
+RUN ${POETRY_HOME}/bin/pip install "poetry==${POETRY_VERSION}"
 
 # copy project requirement files here to ensure they will be cached.
 WORKDIR $PYSETUP_PATH
@@ -70,11 +71,11 @@ COPY poetry.lock pyproject.toml ./
 
 # install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
 RUN --mount=type=cache,target=/root/.cache \
-    poetry install --without dev --no-root
+    poetry install --only main --no-root
 
 # build C dependencies. Remove if you don't need.
 # RUN --mount=type=cache,target=/app/scripts/vendor \
-#     poetry run python scripts/build-c-denpendencies.py && \
+#     poetry run python scripts/build-c-dependencies.py && \
 #     cp scripts/lib/*.so /usr/lib
 
 
@@ -91,15 +92,13 @@ COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 
 RUN apt-get update \
-    && apt-get install -y \
-    git \
-    nano \
-    && apt-get clean
-    # && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # quicker install as runtime deps are already installed
 RUN --mount=type=cache,target=/root/.cache \
-    poetry install --with dev --no-root
+    poetry install --with=dev --no-root
 
 # will become mountpoint of our code
 WORKDIR /LLMitless
