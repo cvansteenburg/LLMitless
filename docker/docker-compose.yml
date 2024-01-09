@@ -8,9 +8,10 @@ services:
       dockerfile: docker/Dockerfile
       target: development
     ports:
-      - "50201:50201"
+      - "50201:50201" # Might want port 8000 here and then set the same for ngrok? Is docker opening a port to outside directly and I should be connecting to it via ngrok (not my local machine?)
     environment:
       - FASTAPI_ENV=development
     volumes:
       - ..:/LLMitless
+      - poetry_deps:/LLMitless/.venv
     command: ["uvicorn", "src.serve:app", "--reload", "--host", "0.0.0.0", "--port", "50201"]
