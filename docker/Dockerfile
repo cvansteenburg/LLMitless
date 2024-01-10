@@ -29,7 +29,7 @@ ENV PYTHONUNBUFFERED=1 \
     # make poetry create the virtual environment in the project's root
     # it gets named `.venv`
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
+    # POETRY_VIRTUALENVS_CREATE=1 \
     # do not ask any interactive question
     POETRY_NO_INTERACTION=1 \
     \
@@ -100,6 +100,10 @@ RUN apt-get update \
 # quicker install as runtime deps are already installed
 RUN --mount=type=cache,target=/root/.cache \
     poetry install --with dev --no-root
+
+# Remove pyproject.toml and poetry.lock from /opt/pysetup
+# as these are now managed via bind mount
+RUN rm -f pyproject.toml poetry.lock
 
 # will become mountpoint of our code
 WORKDIR /LLMitless
