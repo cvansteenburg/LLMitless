@@ -1,0 +1,25 @@
+{
+    "name": "LLMitless",
+    "service": "LLMitless_app",
+    "dockerComposeFile": ["../docker/docker-compose.yml"],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "mypy.runUsingActiveInterpreter": true
+            },
+            "extensions": [
+                "charliermarsh.ruff",
+                "Codeium.codeium",
+                "matangover.mypy",
+                "ms-azuretools.vscode-docker",
+                "ms-python.black-formatter",
+                "ms-python.debugpy",
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ]
+        }
+    },
+    "workspaceFolder": "/LLMitless",
+    "remoteUser": "root"
+}
