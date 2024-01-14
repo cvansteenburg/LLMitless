@@ -1,16 +1,9 @@
 # syntax=docker/dockerfile:1
 # Keep this syntax directive! It's used to enable Docker BuildKit
 
-# TODO:
-# Run as root in dev to make sure it works
-# Run with a user in dev to make sure it works
-# Do I need to define poetry cache_dir if I just log in as user? Poetry will create in current user's home directory
-# Copy that whole env dir into prod and it doesn't matter what poetry chose to name the venv
-# In prod builder, log in as user and let poetry install create .cache
-
 ################################
 # POETRY-ENV-BASE
-# Provides common ENV variables and build args
+# Set common ENV variables args, and build virtual env
 ################################
 
 # Set base python image - use --build-arg at invocation to change
@@ -19,18 +12,21 @@ ARG PYTHON_IMAGE=python:3.11-slim
 FROM ${PYTHON_IMAGE} as poetry-env-base
 
 ARG POETRY_VERSION=1.6.1
+ARG PROJECT_ROOT
 
 ENV POETRY_VERSION=${POETRY_VERSION} \
     POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_OPTIONS_ALWAYS_COPY=true
+    # Define poetry cache location, so we can attach Docker cache to it later for fast installs
+    POETRY_CACHE_DIR="/opt/poetry_cache/.cache/pypoetry/" \
+    # Where our project's virtual environment will live
+    VIRTUAL_ENV="/venv"
 
-ENV PATH="$POETRY_HOME/bin:$PATH"
-
-# print the path for debug
-RUN echo $PATH
-
-# ALSO UNCLEAR IF WE NEED PYTHONPATH
-
+# prepend poetry and venv to path
+ENV PATH="$POETRY_HOME/bin:$VIRTUAL_ENV/bin:$PATH"
+# prepend project root to the path that Python uses to locate packages
+ENV PYTHONPATH="/${PROJECT_ROOT}:${PYTHONPATH}"
+# prepare project's virtual env
+RUN python -m venv $VIRTUAL_ENV
 
 ################################
 # POETRY-BASE
@@ -42,6 +38,9 @@ FROM poetry-env-base as poetry-base
 ENV PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
+    # Staging dir for toml and lock, and installing deps
+    # PYSETUP_PATH="/opt/pysetup"
+
 
 # Update pip and install tools required to install Poetry
 RUN apt-get update \
@@ -53,7 +52,12 @@ RUN python -m venv ${POETRY_HOME}
 RUN ${POETRY_HOME}/bin/pip install -U pip setuptools
 RUN ${POETRY_HOME}/bin/pip install "poetry==${POETRY_VERSION}"
 
-RUN echo $PATH
+# Install production dependencies
+WORKDIR ${PROJECT_ROOT}
+COPY pyproject.toml poetry.lock ./
+# Deps are installed in {POETRY_CACHE_DIR}, so we'll mount a Docker cache there
+RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
+    poetry install --only main --no-root
 
 
 ################################
@@ -63,14 +67,13 @@ RUN echo $PATH
 
 FROM poetry-base as development
 
-ARG PROJECT_ROOT
-ARG APPLICATION_SERVER_PORT
+ARG APPLICATION_DEV_SERVER_PORT
 # A list of whatever tools you'll use in development. You may pass these from docker-compose.
 # Pass these in with format --build-arg packages_to_install="package1 package2 package3"
 ARG ADD_SYSTEM_LEVEL_PACKAGES
 
-# ENV PYTHONPATH=/${PROJECT_ROOT} \ # TODO: Unclear if we need this, given venv isn't here
-ENV APPLICATION_SERVER_PORT=$APPLICATION_SERVER_PORT
+ENV DEVELOPMENT_STAGE=DEVELOPMENT
+ENV APPLICATION_DEV_SERVER_PORT=$APPLICATION_DEV_SERVER_PORT
 
 # Install dev dependencies
 RUN apt-get install -y \
@@ -79,66 +82,76 @@ RUN apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN echo $PATH
+WORKDIR ${PROJECT_ROOT}
+# Install dev dependencies. 
+RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
+    poetry install --without main --no-root
 
-# Note: manually specifying the path to the venv and adding it to the PATH eliminates
-# the need to use poetry run before running a command in the dev container.
-# I didn't do that because I want to stick with the default poetry behavior.
+EXPOSE ${APPLICATION_DEV_SERVER_PORT}
+
+CMD ["bash"]
+
+# Optional command if you prefer not to run it from Compose, devcontainer.json etc
+# CMD ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "80"]
+
+
+################################
+# PRODUCTION
+# Sets up the production image
+################################
+
+FROM poetry-env-base as production
+
+ARG APPLICATION_PROD_SERVER_PORT
+
+ENV DEVELOPMENT_STAGE=PRODUCTION
+
+# copy in our built venv which has our deps
+COPY --from=poetry-base-base $VIRTUAL_ENV $VIRTUAL_ENV
 
 WORKDIR ${PROJECT_ROOT}
+COPY src .
 
-# ################################
-# # PRODUCTION-DEP-BUILDER
-# # Install deps and venv for production or CI image
-# ################################
+# Principle of least privilege: create a new user for running the application
+RUN groupadd -g 1001 python_application && \
+    useradd -r -u 1001 -g python_application python_application
 
-# FROM poetry-env-base as prod-dep-builder
+# Set the WORKDIR to the application root.
+# https://www.uvicorn.org/settings/#development
+# https://docs.docker.com/engine/reference/builder/#workdir
+RUN chown python_application:python_application ${PROJECT_ROOT}
 
+# Document the exposed port
+# https://docs.docker.com/engine/reference/builder/#expose
+EXPOSE ${APPLICATION_PROD_SERVER_PORT}}
 
+# Use the unprivileged user to run the application
+USER 1001
 
-# # Install production dependencies
-# COPY ./pyproject.toml ./poetry.lock ./
-# RUN --mount=type=cache,target=/root/.cache \
-#     poetry install --only main --no-root
+################################
+# TEST-IMAGE
+# Sets up the test image
+################################
 
-# ################################
-# # PRODUCTION-BASE
-# # Sets up the production base image
-# ################################
+FROM poetry-env-base as test-image
 
-# FROM ${PYTHON_IMAGE} as production-image
+ARG APPLICATION_TEST_SERVER_PORT
 
-# ENV FASTAPI_ENV=production
-# ENV PATH="/opt/poetry/bin:$PATH"
+ENV DEVELOPMENT_STAGE=TESTING
 
-# COPY --from=poetry-base /opt/poetry /opt/poetry/
-# COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
-# COPY ./src /LLMitless/src
-# WORKDIR /LLMitless/src
+WORKDIR ${PROJECT_ROOT}
+COPY tests src ./
 
-# # Principle of least privilege: create a new user for running the application
-# RUN groupadd -g 1001 python_application && \
-#     useradd -r -u 1001 -g python_application python_application
+# Principle of least privilege: create a new user for running the application
+RUN groupadd -g 1001 python_application && \
+    useradd -r -u 1001 -g python_application python_application
 
-# # Set the WORKDIR to the application root.
-# # https://www.uvicorn.org/settings/#development
-# # https://docs.docker.com/engine/reference/builder/#workdir
-# WORKDIR ${PYTHONPATH}
-# RUN chown python_application:python_application ${PYTHONPATH}
+# Set the WORKDIR to the application root.
+# https://www.uvicorn.org/settings/#development
+# https://docs.docker.com/engine/reference/builder/#workdir
+RUN chown python_application:python_application ${PROJECT_ROOT}
 
-# # Create cache directory and set permissions because user 1001 has no home
-# # and poetry cache directory.
-# # https://python-poetry.org/docs/configuration/#cache-directory
-# RUN mkdir ${POETRY_CACHE_DIR} && chown python_application:python_application ${POETRY_CACHE_DIR}
+EXPOSE ${APPLICATION_TEST_SERVER_PORT}
 
-# # Document the exposed port
-# # https://docs.docker.com/engine/reference/builder/#expose
-# EXPOSE ${APPLICATION_SERVER_PORT}
+USER 1001
 
-# # Use the unpriveledged user to run the application
-# USER 1001
-
-# # Run the uvicorn application server.
-# CMD exec uvicorn --workers 1 --host 0.0.0.0 --port $APPLICATION_SERVER_PORT app.main:app
-
-# # CMD ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "80"]
