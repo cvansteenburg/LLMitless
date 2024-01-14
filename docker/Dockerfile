@@ -20,12 +20,11 @@ ENV POETRY_VERSION=${POETRY_VERSION} \
     POETRY_CACHE_DIR="/opt/poetry_cache/.cache/pypoetry/" \
     # Where our project's virtual environment will live
     VIRTUAL_ENV="/venv"
-
-# prepend poetry and venv to path
+# Prepend poetry and venv to path
 ENV PATH="$POETRY_HOME/bin:$VIRTUAL_ENV/bin:$PATH"
-# prepend project root to the path that Python uses to locate packages
+# Prepend project root to the path that Python uses to locate packages
 ENV PYTHONPATH="/${PROJECT_ROOT}:${PYTHONPATH}"
-# prepare project's virtual env
+# Prepare project's virtual env
 RUN python -m venv $VIRTUAL_ENV
 
 ################################
@@ -38,14 +37,11 @@ FROM poetry-env-base as poetry-base
 ENV PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
-    # Staging dir for toml and lock, and installing deps
-    # PYSETUP_PATH="/opt/pysetup"
-
 
 # Update pip and install tools required to install Poetry
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
-        build-essential
+    build-essential
 
 # https://python-poetry.org/docs/#installing-manually
 RUN python -m venv ${POETRY_HOME}
@@ -83,6 +79,7 @@ RUN apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR ${PROJECT_ROOT}
+
 # Install dev dependencies. 
 RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
     poetry install --without main --no-root
@@ -91,7 +88,7 @@ EXPOSE ${APPLICATION_DEV_SERVER_PORT}
 
 CMD ["bash"]
 
-# Optional command if you prefer not to run it from Compose, devcontainer.json etc
+# Optional: start uvicorn. Alternatively, start it from Compose, devcontainer.json etc
 # CMD ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "80"]
 
 
@@ -106,24 +103,21 @@ ARG APPLICATION_PROD_SERVER_PORT
 
 ENV DEVELOPMENT_STAGE=PRODUCTION
 
-# copy in our built venv which has our deps
+# Copy in our built venv which has our deps
 COPY --from=poetry-base-base $VIRTUAL_ENV $VIRTUAL_ENV
 
 WORKDIR ${PROJECT_ROOT}
+# Copy in the core application code
 COPY src .
 
 # Principle of least privilege: create a new user for running the application
 RUN groupadd -g 1001 python_application && \
     useradd -r -u 1001 -g python_application python_application
 
-# Set the WORKDIR to the application root.
-# https://www.uvicorn.org/settings/#development
-# https://docs.docker.com/engine/reference/builder/#workdir
+# Grant access to the project root
 RUN chown python_application:python_application ${PROJECT_ROOT}
 
-# Document the exposed port
-# https://docs.docker.com/engine/reference/builder/#expose
-EXPOSE ${APPLICATION_PROD_SERVER_PORT}}
+EXPOSE ${APPLICATION_PROD_SERVER_PORT}
 
 # Use the unprivileged user to run the application
 USER 1001
@@ -146,12 +140,9 @@ COPY tests src ./
 RUN groupadd -g 1001 python_application && \
     useradd -r -u 1001 -g python_application python_application
 
-# Set the WORKDIR to the application root.
-# https://www.uvicorn.org/settings/#development
-# https://docs.docker.com/engine/reference/builder/#workdir
+# Grant access to the project root
 RUN chown python_application:python_application ${PROJECT_ROOT}
 
 EXPOSE ${APPLICATION_TEST_SERVER_PORT}
 
 USER 1001
-
