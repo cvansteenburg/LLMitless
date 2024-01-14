@@ -15,7 +15,7 @@ class DatasetFileFormatNames(StrEnum):
 root_directory = Path(datasets.__path__[0]).resolve()
 
 def build_mapping(directory: Path) -> dict:
-    mapping = {}
+    mapping: dict = {}
     for item in directory.iterdir():
         # Skip hidden and private
         if item.name.startswith(('.', '__')):

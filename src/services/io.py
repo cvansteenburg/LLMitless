@@ -69,7 +69,7 @@ class DocumentContents(BaseModel):
         ),
     )
 
-
+# TODO: fix type issue
 def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     return [
         Document(page_content=source.page_content, metadata=source.metadata)
@@ -146,7 +146,7 @@ def split_large_docs(
 def filter_files(
     collection_digits: str,
     dataset: Path = DATASET_PATH,
-    title_digits: list[str] = None,
+    title_digits: list[str] | None = None,
     file_format: DatasetFileFormatNames = DatasetFileFormatNames.HTML,
 ) -> list[Path]:
     """
