@@ -10,7 +10,7 @@ services:
       args:
         ADD_SYSTEM_LEVEL_PACKAGES: "nano"
         PROJECT_ROOT: /LLMitless
-        APPLICATION_SERVER_PORT: 50201      
+        APPLICATION_DEV_SERVER_PORT: 50201
     ports:
       - "50201:50201" # Might want port 8000 here and then set the same for ngrok? Is docker opening a port to outside directly and I should be connecting to it via ngrok (not my local machine?)
     environment:
