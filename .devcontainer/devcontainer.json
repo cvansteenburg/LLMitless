@@ -5,8 +5,9 @@
     "customizations": {
         "vscode": {
             "settings": {
+                "python.defaultInterpreterPath": "/venv/bin/python",
                 "terminal.integrated.shell.linux": "/bin/bash",
-                "python.venvFolders": ["~/.cache/pypoetry/virtualenvs"],
+                "python.venvFolders": ["/venv"],
                 "mypy.runUsingActiveInterpreter": true
             },
             "extensions": [
@@ -21,6 +22,5 @@
             ]
         }
     },
-    "workspaceFolder": "/LLMitless",
-    "remoteUser": "root"
+    "workspaceFolder": "/LLMitless"
 }
