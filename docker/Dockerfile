@@ -108,8 +108,11 @@ ENV DEVELOPMENT_STAGE=PRODUCTION
 COPY --from=poetry-base $VIRTUAL_ENV $VIRTUAL_ENV
 
 WORKDIR ${PROJECT_ROOT}
+# Optional project-specific mkdir. This module is imported by code but populated by
+# user. Create an empty directory to avoid import errors.
+RUN mkdir datasets && touch datasets/__init__.py
 # Copy in the core application code
-COPY src .
+COPY src ./src
 
 # Principle of least privilege: create a new user for running the application
 RUN groupadd -g 1001 python_application && \
@@ -129,14 +132,19 @@ USER 1001
 # Sets up the test image
 ################################
 
-FROM poetry-env-base as test-image
+FROM poetry-base as test-image
 
 ARG APPLICATION_TEST_SERVER_PORT
 
 ENV DEVELOPMENT_STAGE=TESTING
 
 WORKDIR ${PROJECT_ROOT}
-COPY tests src ./
+# Optional project-specific mkdir. (This module is imported by code but populated by
+# user. We create an empty directory to avoid import errors.)
+RUN mkdir datasets && touch datasets/__init__.py
+# Copy in core application code and tests
+COPY src ./src
+COPY tests ./tests
 
 # Install test dependencies
 RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
@@ -147,8 +155,6 @@ RUN groupadd -g 1001 python_application && \
     useradd -r -u 1001 -g python_application python_application
 
 # Grant access to the project root
-RUN chown python_application:python_application ${PROJECT_ROOT}
-
-EXPOSE ${APPLICATION_TEST_SERVER_PORT}
+RUN chown -R python_application:python_application ${PROJECT_ROOT}
 
 USER 1001
