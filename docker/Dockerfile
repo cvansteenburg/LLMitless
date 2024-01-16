@@ -105,7 +105,7 @@ ARG APPLICATION_PROD_SERVER_PORT
 ENV DEVELOPMENT_STAGE=PRODUCTION
 
 # Copy in our built venv which has our deps
-COPY --from=poetry-base-base $VIRTUAL_ENV $VIRTUAL_ENV
+COPY --from=poetry-base $VIRTUAL_ENV $VIRTUAL_ENV
 
 WORKDIR ${PROJECT_ROOT}
 # Copy in the core application code
