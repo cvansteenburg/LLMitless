@@ -119,7 +119,7 @@ RUN groupadd -g 1001 python_application && \
     useradd -r -u 1001 -g python_application python_application
 
 # Grant access to the project root
-RUN chown python_application:python_application ${PROJECT_ROOT}
+RUN chown -R python_application:python_application ${PROJECT_ROOT}
 
 EXPOSE ${APPLICATION_PROD_SERVER_PORT}
 
