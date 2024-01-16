@@ -27,6 +27,7 @@ ENV PYTHONPATH="/${PROJECT_ROOT}:${PYTHONPATH}"
 # Prepare project's virtual env
 RUN python -m venv $VIRTUAL_ENV
 
+
 ################################
 # POETRY-BASE
 # Install Poetry for use in our virtual environment
@@ -121,6 +122,7 @@ EXPOSE ${APPLICATION_PROD_SERVER_PORT}
 
 # Use the unprivileged user to run the application
 USER 1001
+
 
 ################################
 # TEST-IMAGE
