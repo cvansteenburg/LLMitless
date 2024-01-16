@@ -7,8 +7,7 @@
             "settings": {
                 "python.defaultInterpreterPath": "/venv/bin/python",
                 "terminal.integrated.shell.linux": "/bin/bash",
-                "python.venvFolders": ["/venv"],
-                "mypy.runUsingActiveInterpreter": true
+                "python.venvFolders": ["/venv"]
             },
             "extensions": [
                 "charliermarsh.ruff",
