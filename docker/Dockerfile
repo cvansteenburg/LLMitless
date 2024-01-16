@@ -81,7 +81,7 @@ RUN apt-get install -y \
 
 WORKDIR ${PROJECT_ROOT}
 
-# Install dev dependencies. 
+# Install dev and test dependencies 
 RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
     poetry install --without main --no-root
 
@@ -137,6 +137,10 @@ ENV DEVELOPMENT_STAGE=TESTING
 
 WORKDIR ${PROJECT_ROOT}
 COPY tests src ./
+
+# Install test dependencies
+RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
+    poetry install --only test --no-root
 
 # Principle of least privilege: create a new user for running the application
 RUN groupadd -g 1001 python_application && \
