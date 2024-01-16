@@ -27,7 +27,6 @@ services:
     image: ngrok/ngrok
     env_file:
       - ../.env
-    
     # The env_file option passes vars from files directly to container, so they're not
     # available in Compose file. We use a script to get them from environment @ runtime.
     # The ngrok container has a baked-in entrypoint script that will use these args, but
