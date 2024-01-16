@@ -27,12 +27,15 @@ services:
     image: ngrok/ngrok
     env_file:
       - ../.env
+    
     # The env_file option passes vars from files directly to container, so they're not
     # available in Compose file. We use a script to get them from environment @ runtime.
     # The ngrok container has a baked-in entrypoint script that will use these args 
-    command: tunnel --label edge=edghts_2VTFyUW2cVDTiBC7EDyw3j6Qt06 llmitless_app:50201
-    # command: http --domain="$${NGROK_DOMAIN}" llmitless_app:50201
-    # command: /bin/sh "ngrok http $${NGROK_DOMAIN}:50201"
+    entrypoint: >
+      /bin/sh -c '
+      EDGE_VALUE=$$NGROK_EDGE;
+      exec /entrypoint.sh tunnel --label edge="$$EDGE_VALUE" llmitless_app:50201
+      '
     ports:
       - "4040:4040" # Optional: Expose ngrok web interface
     depends_on:
