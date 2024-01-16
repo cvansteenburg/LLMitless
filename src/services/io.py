@@ -195,7 +195,7 @@ def read_file_content(file_path: Path) -> str:
     with open(file_path, "r") as content_file:
         return content_file.read()
 
-
+# TODO: factor out "for file_path in input_file_paths:" section, always return a list
 def parse_files_from_paths(
     input_file_paths: list[Path],
     parse_function: Callable[[str, Any], str] = (lambda x: x),
