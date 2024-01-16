@@ -27,13 +27,17 @@ uvicorn = "^0.25.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-anyio = "^4.1.0"
-time-machine = "^2.13.0"
 transformers = "^4.36.2"
 mypy = "^1.8.0"
 black = "^23.12.1"
 pretty = "^0.1"
+
+
+[tool.poetry.group.test.dependencies]
+anyio = "^4.1.0"
+pytest = "^7.4.3"
+time-machine = "^2.13.0"
+
 
 [build-system]
 requires = ["poetry-core"]
