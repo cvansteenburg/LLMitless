@@ -30,7 +30,8 @@ services:
     
     # The env_file option passes vars from files directly to container, so they're not
     # available in Compose file. We use a script to get them from environment @ runtime.
-    # The ngrok container has a baked-in entrypoint script that will use these args 
+    # The ngrok container has a baked-in entrypoint script that will use these args, but
+    # that script can't access env vars, so we get them with custom script, then call original entrypoint
     entrypoint: >
       /bin/sh -c '
       EDGE_VALUE=$$NGROK_EDGE;
