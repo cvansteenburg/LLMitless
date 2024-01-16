@@ -20,15 +20,21 @@ services:
     volumes:
       - ..:/LLMitless
     command: ["uvicorn", "src.serve:app", "--reload", "--host", "0.0.0.0", "--port", "50201"]
-    depends_on:
-      - ngrok
+    restart: unless-stopped
+
 
   ngrok:
     image: ngrok/ngrok
     env_file:
       - ../.env
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command: http ${NGROK_DOMAIN}:50201
+    # The env_file option passes vars from files directly to container, so they're not
+    # available in Compose file. We use a script to get them from environment @ runtime.
+    # The ngrok container has a baked-in entrypoint script that will use these args 
+    command: tunnel --label edge=edghts_2VTFyUW2cVDTiBC7EDyw3j6Qt06 llmitless_app:50201
+    # command: http --domain="$${NGROK_DOMAIN}" llmitless_app:50201
+    # command: /bin/sh "ngrok http $${NGROK_DOMAIN}:50201"
     ports:
       - "4040:4040" # Optional: Expose ngrok web interface
+    depends_on:
+      - llmitless_app
+    restart: unless-stopped

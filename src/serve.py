@@ -21,7 +21,7 @@ from src.services.io import (
 )
 from src.utils.logging_init import init_logging
 
-ENV_CONTEXT = os.getenv("ENV_CONTEXT", "development")
+ENV_CONTEXT = os.getenv("ENV_CONTEXT", "production")
 
 # Load the appropriate .env file
 env_file = (
@@ -37,7 +37,8 @@ app = FastAPI()
 CONFIG_FILE = "pyproject.toml"
 logger = init_logging(CONFIG_FILE)
 
-app.add_middleware(HTTPSRedirectMiddleware)
+if ENV_CONTEXT != "development":
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 
 # Make sure we're live
