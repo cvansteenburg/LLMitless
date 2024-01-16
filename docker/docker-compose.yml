@@ -16,7 +16,7 @@ services:
     ports:
       - "50201:50201"
     environment:
-      - FASTAPI_ENV=development
+      - ENV_CONTEXT=development
     volumes:
       - ..:/LLMitless
     command: ["uvicorn", "src.serve:app", "--reload", "--host", "0.0.0.0", "--port", "50201"]
