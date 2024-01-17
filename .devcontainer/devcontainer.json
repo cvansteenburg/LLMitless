@@ -1,0 +1,25 @@
+{
+    "name": "LLMitless",
+    "service": "llmitless_app",
+    "dockerComposeFile": ["../docker/docker-compose.yml"],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/venv/bin/python",
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.venvFolders": ["/venv"]
+            },
+            "extensions": [
+                "charliermarsh.ruff",
+                "Codeium.codeium",
+                "ms-azuretools.vscode-docker",
+                "ms-python.black-formatter",
+                "ms-python.debugpy",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "matangover.mypy"
+            ]
+        }
+    },
+    "workspaceFolder": "/LLMitless"
+}
