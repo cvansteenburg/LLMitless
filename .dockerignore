@@ -1,0 +1,10 @@
+.env*
+__pycache__
+.pytest_cache
+datasets_sample
+logs
+temp
+wandb
+.gitignore
+.todo.txt
+.github

@@ -105,7 +105,7 @@ def populate_template(dict_of_substitutions: dict, template: str) -> str:
 
 
 # format_document is included in chain rather than partialed as a global variable because inital_prompt is redefined at runtime.
-map_chain = (
+map_chain: Runnable[Any, str] = (
     {
         "doc_in_template": lambda x: format_document(
             x, prompt=PromptTemplate.from_template(prompts["core_prompt_template"])
@@ -257,7 +257,7 @@ async def map_reduce(
     """
 
     # Build configuration map
-    configurables = {}
+    configurables: dict = {}
 
     if api_key is not None:
         configurables["api_key"] = api_key
@@ -276,6 +276,7 @@ async def map_reduce(
 
     max_concurrency = max_concurrency
 
+    # TODO: pass into RunnableConfig class, or typehint as such if valid
     combined_configs = {
         "callbacks": callbacks,
         "configurable": configurables,
