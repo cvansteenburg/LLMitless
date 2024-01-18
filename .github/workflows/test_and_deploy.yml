@@ -24,6 +24,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build and test
+        env:
+            PYTHONTRACEMALLOC: ${{ env.PYTHONTRACEMALLOC }}
+            PYTHONASYNCIODEBUG: ${{ env.PYTHONASYNCIODEBUG }}
+            WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: docker compose -f docker/docker-compose.test-image.yml run llmitless_app
 
 #   deploy:
@@ -34,7 +38,7 @@ jobs:
 #         uses: actions/checkout@v4
 
 #       - name: Set up Docker BuildKit
-#         uses: docker/setup-buildx-action@v1
+#         uses: docker/setup-buildx-action@v3
 
 #       - name: Set up Google Cloud SDK
 #         uses: google-github-actions/setup-gcloud@master
@@ -48,6 +52,8 @@ jobs:
 #           service_account: 'your-service-account@${{ env.PROJECT_ID }}.iam.gserviceaccount.com'
 
 #       - name: Build and push Docker image to Google Artifact Registry
+#         env:
+#                WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
 #         run: |
 #           docker compose -f docker-compose.prod.yml build
 #           docker tag LLMitless_PROD:latest ${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE }}
