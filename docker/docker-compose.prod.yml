@@ -3,8 +3,8 @@ version: '3.8'
 services:
   llmitless_app:
     container_name: LLMitless_PROD
+    image: ${DOCKER_IMAGE_NAME_PROD:-llmitless_prod:latest}
     build:
-      image: ${DOCKER_IMAGE_NAME_PROD:-llmitless_prod:latest}
       context: ..
       dockerfile: docker/Dockerfile
       target: production
