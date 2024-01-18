@@ -1,4 +1,4 @@
-name: CI/CD to Google Cloud Run
+name: Tests
 
 on:
   push:
