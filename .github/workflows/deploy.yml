@@ -42,7 +42,7 @@ jobs:
         env:
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: |
-          docker compose -f docker-compose.prod.yml build
+          docker compose -f docker/docker-compose.prod.yml build
           docker tag LLMitless_PROD:latest ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
           docker push ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
 
