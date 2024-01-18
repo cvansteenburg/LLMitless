@@ -3,12 +3,12 @@ name: Deployment Pipeline
 on:
   workflow_dispatch:
 
-# These are set within github as Repository Variables but shown here for clarity 
-# env:
-#     PROJECT_ID: ${{ env.PROJECT_ID_GGL_PROD }}
-#     SERVICE_NAME: ${{ env.SERVICE_NAME_GGL_CLRUN_PROD }}
-#     REGION: ${{ env.REGION_GGL_ARTIFACT_PROD }}
-#     ARTIFACT_REGISTRY: ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}
+env:
+  DOCKER_IMAGE_NAME_PROD: ${{ vars.DOCKER_IMAGE_NAME_PROD }}
+  PROJECT_ID: ${{ vars.PROJECT_ID_GGL_PROD }}
+  SERVICE_NAME: ${{ vars.SERVICE_NAME_GGL_CLRUN_PROD }}
+  REGION: ${{ vars.REGION_GGL_ARTIFACT_PROD }}
+  ARTIFACT_REGISTRY: ${{ vars.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}
 
 jobs:
   deploy:
@@ -45,17 +45,17 @@ jobs:
           docker compose -f docker/docker-compose.prod.yml build
           echo "Listing built images:"
           docker images
-          echo "Tagged image: ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}"
-          docker tag ${{ env.DOCKER_IMAGE_NAME_PROD }} ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
-          docker push ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
+          echo "Tagged image: ${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE }}"
+          docker tag ${{ env.DOCKER_IMAGE_NAME_PROD }} ${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE }}
 
       - name: Deploy to Google Cloud Run
         id: deploy_to_cloud_run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: ${{ env.SERVICE_NAME_GGL_CLRUN_PROD }}
-          image: ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
-          region: ${{ env.REGION_GGL_ARTIFACT_PROD }}
+          service: ${{ env.SERVICE_NAME }}
+          image: ${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE }}
+          region: ${{ env.REGION }}
           # Pass args Cloud Run will use to start the service in the container
           flags: --args="uvicorn,src.serve:app,--host,0.0.0.0,--port,8080"
           # Note: allow-unauthenticated is set in the service configs, not here.
