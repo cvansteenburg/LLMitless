@@ -45,8 +45,8 @@ jobs:
           docker compose -f docker/docker-compose.prod.yml build
           echo "Listing built images:"
           docker images
-          docker tag llmitless_prod:latest ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
           echo "Tagged image: ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}"
+          docker tag ${{ env.DOCKER_IMAGE_NAME_PROD }} ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
           docker push ${{ env.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}/${{ env.IMAGE }}
 
       - name: Deploy to Google Cloud Run

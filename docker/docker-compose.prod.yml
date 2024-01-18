@@ -4,6 +4,7 @@ services:
   llmitless_app:
     container_name: LLMitless_PROD
     build:
+      image: ${DOCKER_IMAGE_NAME_PROD:-llmitless_prod:latest}
       context: ..
       dockerfile: docker/Dockerfile
       target: production
