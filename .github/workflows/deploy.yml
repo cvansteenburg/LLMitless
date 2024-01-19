@@ -9,6 +9,7 @@ env:
   SERVICE_NAME: ${{ vars.SERVICE_NAME_GGL_CLRUN_PROD }}
   REGION: ${{ vars.REGION_GGL_ARTIFACT_PROD }}
   ARTIFACT_REGISTRY: ${{ vars.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}
+  IMAGE: "" # set at runtime
 
 # Add 'id-token' with the intended permissions for workload identity federation
 permissions:
@@ -85,9 +86,11 @@ jobs:
           image: ${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE }}
           region: ${{ env.REGION }}
           # Pass args Cloud Run will use to start the service in the container
-          flags: --args="uvicorn,src.serve:app,--host,0.0.0.0,--port,8080"
-          # Note: allow-unauthenticated is set in the service configs, not here.
-          # https://github.com/google-github-actions/deploy-cloudrun?tab=readme-ov-file#allowing-unauthenticated-requests
+          flags: |
+             --args="uvicorn,src.serve:app,--host,0.0.0.0,--port,8080"
+             --service-account="${{ secrets.WIF_SERVICE_ACCOUNT }}"
+            # Note: allow-unauthenticated is set in the service configs, not here.
+            # https://github.com/google-github-actions/deploy-cloudrun?tab=readme-ov-file#allowing-unauthenticated-requests
 
       # If required, use the Cloud Run url output in later steps
       - name: Show Output
