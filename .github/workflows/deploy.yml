@@ -10,13 +10,13 @@ env:
   REGION: ${{ vars.REGION_GGL_ARTIFACT_PROD }}
   ARTIFACT_REGISTRY: ${{ vars.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}
 
+# Add 'id-token' with the intended permissions for workload identity federation
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   deploy:
-    # Add 'id-token' with the intended permissions for workload identity federation
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -26,6 +26,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Authenticate to Google Cloud with Workload Identity Federation
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           # token_format: 'access_token'
@@ -38,6 +39,12 @@ jobs:
           OIDC_TOKEN=$(echo ${{ steps.auth.outputs.id_token }})
           PAYLOAD=$(echo $OIDC_TOKEN | cut -d "." -f2 | base64 --decode)
           echo "OIDC Token Payload: $PAYLOAD"
+
+      - id: 'gcloud'
+        name: 'gcloud'
+        run: |-
+          gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
+          gcloud services list
       
       - name: Print authenticated account
         run: gcloud auth list
