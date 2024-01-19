@@ -34,17 +34,17 @@ jobs:
           workload_identity_provider: '${{ vars.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
           service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
       
-      - name: Print OIDC token payload
-        run: |
-          OIDC_TOKEN=$(echo ${{ steps.auth.outputs.id_token }})
-          PAYLOAD=$(echo $OIDC_TOKEN | cut -d "." -f2 | base64 --decode)
-          echo "OIDC Token Payload: $PAYLOAD"
+      # - name: Print OIDC token payload
+      #   run: |
+      #     OIDC_TOKEN=$(echo ${{ steps.auth.outputs.id_token }})
+      #     PAYLOAD=$(echo $OIDC_TOKEN | cut -d "." -f2 | base64 --decode)
+      #     echo "OIDC Token Payload: $PAYLOAD"
 
-      - id: 'gcloud'
-        name: 'gcloud'
-        run: |-
-          gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
-          gcloud services list
+      # - id: 'gcloud'
+      #   name: 'gcloud'
+      #   run: |-
+      #     gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
+      #     gcloud services list
       
       - name: Print authenticated account
         run: gcloud auth list
