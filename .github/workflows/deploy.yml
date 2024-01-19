@@ -34,6 +34,14 @@ jobs:
           workload_identity_provider: '${{ vars.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
           service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
       
+      # https://github.com/marketplace/actions/docker-login#google-artifact-registry-gar
+      - name: Login to Google Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ARTIFACT_REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}    
+
       # - name: Print OIDC token payload
       #   run: |
       #     OIDC_TOKEN=$(echo ${{ steps.auth.outputs.id_token }})
@@ -46,11 +54,11 @@ jobs:
       #     gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
       #     gcloud services list
       
-      - name: Print authenticated account
-        run: gcloud auth list
+      # - name: Print authenticated account
+      #   run: gcloud auth list
         
-      - name: Configure Docker to use gcloud as a credential helper
-        run: gcloud auth configure-docker
+      # - name: Configure Docker to use gcloud as a credential helper
+      #   run: gcloud auth configure-docker
 
       # Make unique image name: first 7 char of commit SHA and the GH Actions run number
       - name: Define IMAGE Tag
