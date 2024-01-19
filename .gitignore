@@ -179,3 +179,7 @@ src/services/output
 .parking_lot.py
 .todo.txt
 temp/
+
+# Ignore generated credentials from google-github-actions/auth
+# https://github.com/google-github-actions/auth/tree/v2/
+gha-creds-*.json
