@@ -31,8 +31,8 @@ jobs:
         with:
           token_format: access_token
           project_id: '${{ env.PROJECT_ID }}'
-          workload_identity_provider: '${{ vars.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
-          service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
+          workload_identity_provider: '${{ secrets.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
+          service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
       
       # https://github.com/marketplace/actions/docker-login#google-artifact-registry-gar
       - name: Login to Google Artifact Registry

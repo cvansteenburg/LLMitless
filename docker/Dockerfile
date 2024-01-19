@@ -111,6 +111,7 @@ WORKDIR ${PROJECT_ROOT}
 # Optional project-specific mkdir. This module is imported by code but populated by
 # user. Create an empty directory to avoid import errors.
 RUN mkdir datasets && touch datasets/__init__.py
+COPY pyproject.toml ./
 # Copy in the core application code
 COPY src ./src
 

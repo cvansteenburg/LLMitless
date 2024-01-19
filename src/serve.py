@@ -329,5 +329,5 @@ async def summarize_from_disk(
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("serve:app", host="127.0.0.1", port=50201, reload=True)
+    
+    uvicorn.run("serve:app", host="127.0.0.1", port=50201, reload=True, log_level="trace")
