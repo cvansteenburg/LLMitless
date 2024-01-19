@@ -144,6 +144,7 @@ WORKDIR ${PROJECT_ROOT}
 # user. We create an empty directory to avoid import errors.)
 RUN mkdir datasets && touch datasets/__init__.py
 # Copy in core application code and tests
+COPY pyproject.toml ./
 COPY src ./src
 COPY tests ./tests
 

@@ -37,8 +37,8 @@ app = FastAPI()
 CONFIG_FILE = "pyproject.toml"
 logger = init_logging(CONFIG_FILE)
 
-if ENV_CONTEXT != "development":
-    app.add_middleware(HTTPSRedirectMiddleware)
+# if ENV_CONTEXT != "development":
+#     app.add_middleware(HTTPSRedirectMiddleware)
 
 
 # Make sure we're live
