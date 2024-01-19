@@ -44,7 +44,7 @@ os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 # llm = ChatOpenAI(callbacks=[temp_reporter]).configurable_fields(
 
 # # UNCOMMENT FOR LIVE OPENAI LLM
-llm = ChatOpenAI().configurable_fields(
+llm = ChatOpenAI(openai_api_key="should_be_user_defined").configurable_fields(
     openai_api_key=ConfigurableField(
         id="api_key",
         name="OpenAI API Key",
