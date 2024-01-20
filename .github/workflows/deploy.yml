@@ -11,7 +11,7 @@ env:
   ARTIFACT_REGISTRY: ${{ vars.ARTIFACT_REGISTRY_GGL_ARTIFACT_PROD }}
   IMAGE: "" # set at runtime
 
-# Add 'id-token' with the intended permissions for workload identity federation
+# Allow creation of 'id-token' for workload identity federation
 permissions:
   contents: read
   id-token: write
@@ -33,7 +33,7 @@ jobs:
           token_format: access_token
           project_id: '${{ env.PROJECT_ID }}'
           workload_identity_provider: '${{ secrets.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
-          service_account: '${{ vars.WSA }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
+          service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
       
       # https://github.com/marketplace/actions/docker-login#google-artifact-registry-gar
       - name: Login to Google Artifact Registry
@@ -41,30 +41,12 @@ jobs:
         with:
           registry: ${{ env.ARTIFACT_REGISTRY }}
           username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}    
-
-      # - name: Print OIDC token payload
-      #   run: |
-      #     OIDC_TOKEN=$(echo ${{ steps.auth.outputs.id_token }})
-      #     PAYLOAD=$(echo $OIDC_TOKEN | cut -d "." -f2 | base64 --decode)
-      #     echo "OIDC Token Payload: $PAYLOAD"
-
-      # - id: 'gcloud'
-      #   name: 'gcloud'
-      #   run: |-
-      #     gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
-      #     gcloud services list
-      
-      # - name: Print authenticated account
-      #   run: gcloud auth list
-        
-      # - name: Configure Docker to use gcloud as a credential helper
-      #   run: gcloud auth configure-docker
+          password: ${{ steps.auth.outputs.access_token }}
 
       # Make unique image name: first 7 char of commit SHA and the GH Actions run number
       - name: Define IMAGE Tag
         run: |
-          IMAGE_TAG="sha-$(echo ${GITHUB_SHA} | cut -c1-7)-run-${GITHUB_RUN_NUMBER}"
+          IMAGE_TAG="run-${GITHUB_RUN_NUMBER}-sha-$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "IMAGE=${IMAGE_TAG}" >> $GITHUB_ENV
     
       - name: Build and push Docker image to Google Artifact Registry
@@ -89,11 +71,11 @@ jobs:
           flags: |
             --args=uvicorn,src.serve:app,--host,0.0.0.0,--port,8080
           # Set up a separate runtime service account for added security and enable here.
-          # Must be different from service account authed above
+          # Must be different from service account authorized above - Cloud Run will use this account.
           # --service-account="${{ secrets.RUNTIME_SERVICE_ACCOUNT }}"
           # Note: allow-unauthenticated is set in the service configs, not here.
           # https://github.com/google-github-actions/deploy-cloudrun?tab=readme-ov-file#allowing-unauthenticated-requests
 
-      # If required, use the Cloud Run url output in later steps
+      # Convenience step to Make Cloud Run url output available
       - name: Show Output
         run: echo ${{ steps.deploy_to_cloud_run.outputs.url }}
