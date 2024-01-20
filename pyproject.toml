@@ -24,6 +24,7 @@ html5lib = "^1.1"
 tomli = "^2.0.1"
 fastapi = "^0.109.0"
 uvicorn = "^0.25.0"
+sentry-sdk = {extras = ["fastapi"], version = "^1.39.2"}
 
 
 [tool.poetry.group.dev.dependencies]
