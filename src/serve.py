@@ -2,6 +2,7 @@ import os
 from enum import StrEnum
 from typing import Annotated, Any, Coroutine
 
+import sentry_sdk
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
@@ -20,6 +21,17 @@ from src.services.io import (
     transform_raw_docs,
 )
 from src.utils.logging_init import init_logging
+
+sentry_sdk.init(
+    dsn="https://e6e80ca172e765ec75ad49a1137e2529@o4506601226764288.ingest.sentry.io/4506601237839872",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 ENV_CONTEXT = os.getenv("ENV_CONTEXT", "production")
 
@@ -325,7 +337,6 @@ async def summarize_from_disk(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server error",
         )
-
 
 if __name__ == "__main__":
     import uvicorn
