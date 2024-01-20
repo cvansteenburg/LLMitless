@@ -17,7 +17,8 @@
                 "ms-python.debugpy",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "matangover.mypy"
+                "matangover.mypy",
+                "github.vscode-github-actions"
             ]
         }
     },
