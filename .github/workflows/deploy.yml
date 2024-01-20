@@ -87,8 +87,10 @@ jobs:
           region: ${{ env.REGION }}
           # Pass args Cloud Run will use to start the service in the container
           flags: |
-            --args="uvicorn,src.serve:app,--host,0.0.0.0,--port,8080"
-          # --service-account="${{ vars.WSA }}"
+            --args=uvicorn,src.serve:app,--host,0.0.0.0,--port,8080
+          # Set up a separate runtime service account for added security and enable here.
+          # Must be different from service account authed above
+          # --service-account="${{ secrets.RUNTIME_SERVICE_ACCOUNT }}"
           # Note: allow-unauthenticated is set in the service configs, not here.
           # https://github.com/google-github-actions/deploy-cloudrun?tab=readme-ov-file#allowing-unauthenticated-requests
 
