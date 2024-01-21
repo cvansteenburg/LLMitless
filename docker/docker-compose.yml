@@ -19,7 +19,16 @@ services:
       - ENV_CONTEXT=development
     volumes:
       - ..:/LLMitless
-    command: ["uvicorn", "src.serve:app", "--reload", "--host", "0.0.0.0", "--port", "50201"]
+    # Start a bash shell
+    # Shut down gracefully on SIGTERM from command+c, 
+    # execute any commands specified in the "command" section in the Compose file
+    # keep the container running with a loop
+    entrypoint: |
+      /bin/sh -c "echo Container started; \
+      trap 'exit 0' 15; \
+      exec \"$$@\"; \
+      while sleep 1 & wait $$!; do :; done"
+    # command: ["uvicorn", "src.serve:app", "--reload", "--host", "0.0.0.0", "--port", "50201"]
     restart: unless-stopped
 
 
