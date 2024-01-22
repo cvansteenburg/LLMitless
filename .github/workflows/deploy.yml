@@ -68,6 +68,7 @@ jobs:
           # Pass args Cloud Run will use to start the service in the container
           flags: |
             --set-env-vars=WANDB_API_KEY=${{ secrets.WANDB_API_KEY }}
+            --set-secrets=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             --args=uvicorn,src.serve:app,--host,0.0.0.0,--port,8080
           # Set up a separate runtime service account for added security and enable here.
           # Must be different from service account authorized above - Cloud Run will use this account.
