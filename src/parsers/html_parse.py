@@ -1,5 +1,6 @@
 import re
 from types import MappingProxyType
+from typing import cast
 
 from bs4 import BeautifulSoup as soup
 from bs4.element import Tag
@@ -8,12 +9,11 @@ from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.html import partition_html
 
 
-def postmark_html_strip_address(html_content):
+def postmark_html_strip_address(html_content: str) -> str:
     souped_html = soup(html_content, "html.parser")
 
     for header_div in souped_html.find_all("div", class_="gmail_attr"):
-        header_div: Tag
-        header_div.decompose()
+        cast(Tag, header_div).decompose()
 
     return str(souped_html)
 
