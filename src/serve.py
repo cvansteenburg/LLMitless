@@ -45,7 +45,7 @@ load_dotenv(env_file)
 
 
 app = FastAPI(
-    title="LLMitless",
+    title='llmitless',
     description=(
         "Simple scaffolding, testbed, and API endpoints for building, testing, and"
         " deploying LLM chains."
