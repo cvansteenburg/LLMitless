@@ -44,7 +44,13 @@ env_file = (
 load_dotenv(env_file)
 
 
-app = FastAPI()
+app = FastAPI(
+    title="LLMitless",
+    description=(
+        "Simple scaffolding, testbed, and API endpoints for building, testing, and"
+        " deploying LLM chains."
+    ),
+)
 
 CONFIG_FILE = "pyproject.toml"
 logger = init_logging(CONFIG_FILE)
@@ -157,21 +163,38 @@ class SummarizeMapReduce(BaseModel):
 
 
 class UserLLMConfig(BaseModel):
-    organization: str | None = Field(
-        default=None,
-        title="Organization",
-        description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization.",
-    ),
-    model: str | None = Field(
-        default=None,
-        title="Model name",
-        description="The model to use for LLM calls. If not specified, defaults to gpt-3.5-turbo"
-    ),
+    organization: str | None = (
+        Field(
+            default=None,
+            title="Organization",
+            description=(
+                "For users who belong to multiple organizations, you can pass a header"
+                " to specify which organization is used for an API request. Usage from"
+                " these API requests will count as usage for the specified"
+                " organization."
+            ),
+        ),
+    )
+    model: str | None = (
+        Field(
+            default=None,
+            title="Model name",
+            description=(
+                "The model to use for LLM calls. If not specified, defaults to"
+                " gpt-3.5-turbo"
+            ),
+        ),
+    )
     temperature: float | None = Field(
         default=None,
         title="Temperature",
-        description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
+        description=(
+            "Controls randomness of the output. Values closer to 0 make output more"
+            " random, values closer to 1 make output more deterministic. If not"
+            " specified, default is 0.7"
+        ),
     )
+
 
 class InputDocFormat(StrEnum):
     HTML = "html"
@@ -202,11 +225,14 @@ class SummarizationResult(BaseModel):
 
 @app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents")
 async def summarize(
-    api_key: Annotated[str, Header(
-        ...,
-        title="API key",
-        description="API key for the LLM. Default LLM is OpenAI",
-    )],
+    api_key: Annotated[
+        str,
+        Header(
+            ...,
+            title="API key",
+            description="API key for the LLM. Default LLM is OpenAI",
+        ),
+    ],
     input_doc_format: InputDocFormat,
     docs_to_summarize: list[DocumentContents],
     preprocessor: Preprocessor,
@@ -267,14 +293,16 @@ async def summarize(
         )
 
 
-     
 @app.post("/summarize_from_disk")
 async def summarize_from_disk(
-    api_key: Annotated[str, Header(
-        ...,
-        title="API key",
-        description="API key for the LLM. Default LLM is OpenAI",
-    )],
+    api_key: Annotated[
+        str,
+        Header(
+            ...,
+            title="API key",
+            description="API key for the LLM. Default LLM is OpenAI",
+        ),
+    ],
     file_filter: FileFilter,
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
@@ -338,7 +366,10 @@ async def summarize_from_disk(
             detail="Server error",
         )
 
+
 if __name__ == "__main__":
     import uvicorn
-    
-    uvicorn.run("serve:app", host="127.0.0.1", port=50201, reload=True, log_level="trace")
+
+    uvicorn.run(
+        "serve:app", host="127.0.0.1", port=50201, reload=True, log_level="trace"
+    )
