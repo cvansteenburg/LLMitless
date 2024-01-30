@@ -4,7 +4,7 @@ from typing import Annotated, Any, Coroutine
 
 import sentry_sdk
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from langchain.callbacks import get_openai_callback
 from langchain_core.documents import Document
@@ -20,6 +20,7 @@ from src.services.io import (
     filter_files,
     transform_raw_docs,
 )
+from src.utils.client_auth import check_basic_auth
 from src.utils.logging_init import init_logging
 
 sentry_sdk.init(
@@ -58,6 +59,7 @@ logger = init_logging(CONFIG_FILE)
 # if ENV_CONTEXT != "development":
 #     app.add_middleware(HTTPSRedirectMiddleware)
 
+CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 
 # Make sure we're live
 @app.get("/")
@@ -238,6 +240,7 @@ async def summarize(
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
     llm_config: UserLLMConfig,
+    auth: CheckBasicAuth,
 ) -> SummarizationResult:
     """
     Summarize a list of documents. Input doc format can be html, markdown, or text, but
@@ -307,6 +310,7 @@ async def summarize_from_disk(
     preprocessor: Preprocessor,
     summarize_map_reduce: SummarizeMapReduce,
     llm_config: UserLLMConfig,
+    auth: CheckBasicAuth,
 ) -> SummarizationResult:
     """
     Select and summarize a subset of files from a dataset on the server.
