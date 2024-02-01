@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import StrEnum
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, cast, overload
 
 import tiktoken
 from dotenv import load_dotenv
@@ -347,13 +347,28 @@ def consolidate_lists(
         collapsed_docs.append(collapse_docs(list, combine_doc_fn, **kwargs))
     return collapsed_docs
 
-
-# TODO: move typeerror check to parse_files fns
+@overload
 async def transform_raw_docs(
-    input_files: list[Path] | list[DocumentContents],
+    input_files: list[Path],
     parse_fn: Callable[[str, Any], str],
     max_tokens_per_doc: int,
-    metadata_to_include: list[str],
+    metadata_to_include: list[str] | None = None,
+    **kwargs,
+) -> list[Document]: ...
+@overload
+async def transform_raw_docs(
+    input_files: list[DocumentContents],
+    parse_fn: Callable[[str, Any], str],
+    max_tokens_per_doc: int,
+    metadata_to_include: list[str] | None = None,
+    **kwargs,
+) -> list[Document]: ...
+# TODO: move typeerror check to parse_files fns
+async def transform_raw_docs(
+    input_files,
+    parse_fn: Callable[[str, Any], str],
+    max_tokens_per_doc: int,
+    metadata_to_include: list[str] | None = None,
     **kwargs,
 ) -> list[Document]:
     try:
