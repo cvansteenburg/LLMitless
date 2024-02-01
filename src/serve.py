@@ -165,28 +165,24 @@ class SummarizeMapReduce(BaseModel):
 
 
 class UserLLMConfig(BaseModel):
-    organization: str | None = (
-        Field(
-            default=None,
-            title="Organization",
-            description=(
-                "For users who belong to multiple organizations, you can pass a header"
-                " to specify which organization is used for an API request. Usage from"
-                " these API requests will count as usage for the specified"
-                " organization."
-            ),
+    organization: str = Field(
+        default=None,
+        title="Organization",
+        description=(
+            "For users who belong to multiple organizations, you can pass a header"
+            " to specify which organization is used for an API request. Usage from"
+            " these API requests will count as usage for the specified"
+            " organization."
         ),
     )
-    model: str | None = (
-        Field(
+    model: str | None = Field(
             default=None,
             title="Model name",
             description=(
                 "The model to use for LLM calls. If not specified, defaults to"
                 " gpt-3.5-turbo"
             ),
-        ),
-    )
+        )
     temperature: float | None = Field(
         default=None,
         title="Temperature",
