@@ -296,6 +296,7 @@ def write_to_file(
                 output_file.write(str(item))
 
 
+# TODO: Why does this have no callers
 def combine_document_content(
     doc_list: list[Document], metadata_to_include: list[str] | None = None
 ) -> str:
@@ -337,7 +338,7 @@ def combine_document_content(
 
     return content_as_str
 
-
+# TODO: use acollapse docs, and copy it in here instead of using langchain's fn
 def consolidate_lists(
     source_lists: list[list[Document]], combine_doc_fn, **kwargs
 ) -> list[Document]:
