@@ -5,13 +5,11 @@ from typing import Annotated, Any, Coroutine
 import sentry_sdk
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, status
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from langchain.callbacks import get_openai_callback
 from langchain_core.documents import Document
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from src.chains.map_reduce import map_reduce
-from src.models.dataset_model import DatasetFileFormatNames
 from src.parsers.html_parse import PARSE_FNS
 from src.services.io import (
     DocumentContents,
