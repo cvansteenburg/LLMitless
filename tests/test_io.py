@@ -46,7 +46,7 @@ def test_no_matching_collection_digits():
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        result = filter_files(filter_inputs, test_root=True)
+        result = filter_files(filter_inputs, test_root=True) # noqa [F841]
         assert exc_info.value.status_code == 404
         assert "Could not find collection 999" in exc_info.value.detail
 
@@ -89,7 +89,11 @@ def test_matching_collection_and_multiple_title_digits(file_format_checks):
 # Test when the file_format specified matches files in the directories
 def test_existing_file_format(dataset_path, file_format_checks):
     file_format, expected_file_name = file_format_checks
-    result = filter_files('000', dataset_path, file_format=file_format)
+    filter_inputs = FileFilter(
+        collection_digits='000',
+        file_format=file_format
+    )
+    result = filter_files(filter_inputs, test_root=True)
     
     assert any(file_path.exists() for file_path in result), "Expected at least one file to exist."
     assert any(expected_file_name in file_path.name for file_path in result), \

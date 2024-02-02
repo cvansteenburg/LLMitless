@@ -170,7 +170,8 @@ class FileFilter(BaseModel):
 
     @field_validator("title_digits")
     @classmethod
-    def validate_title_digits(cls, v: str):
+    def validate_title_digits(cls, v: list[str] | None):
+        v = None if v == [] else v
         if v is not None:
             for i in v:
                 if not i.isdigit() or not 0 <= int(i) <= 99999:
