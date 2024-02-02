@@ -151,8 +151,8 @@ class FileFilter(BaseModel):
         title="Collection digits",
         description='Usually a 3 digit number expressed as a string eg. "010"',
     )
-    title_digits: list[int] | None = Field(
-        ...,
+    title_digits: list[str] | None = Field(
+        default= None,
         title="Title digits",
         description=(
             'A list of usually 3 digit numbers expressed as a strings eg. ["001",'
@@ -161,15 +161,24 @@ class FileFilter(BaseModel):
     )
     file_format: DatasetFileFormatNames = DatasetFileFormatNames.HTML
 
-    @field_validator("title_digits", "collection_digits")
+    @field_validator ("collection_digits")
     @classmethod
-    def validate_title_digits(cls, v):
-        if v is not None and not 0 <= v <= 99999:
-            raise ValueError("Each int in title_digits may be up to 5 digits in length")
+    def validate_collection_digits(cls, v: str):
+        if v and not v.isdigit() or not 0 <= int(v) <= 99999:
+            raise ValueError("collection_digits must be a string representing an integer between 0 and 99999")
+        return v
+
+    @field_validator("title_digits")
+    @classmethod
+    def validate_title_digits(cls, v: str):
+        if v is not None:
+            for i in v:
+                if not i.isdigit() or not 0 <= int(i) <= 99999:
+                    raise ValueError("Each int in title_digits must be a string representing an integer between 0 and 99999")
         return v
 
 
-def filter_files(filter_inputs: FileFilter) -> list[Path]:
+def filter_files(filter_inputs: FileFilter, test_root: bool = False) -> list[Path]:
     """
     Filters and returns a list of file paths from a dataset directory based on the provided criteria.
 
@@ -197,7 +206,13 @@ def filter_files(filter_inputs: FileFilter) -> list[Path]:
     _file_format = filter_inputs.file_format.value
 
     try:
-        dataset_root = Path(datasets.__path__[0]).resolve()
+        if test_root:
+            # TODO: make this an env var
+            from tests import dataset_for_testing as test_data
+            # path to tests/dataset_for_testing
+            dataset_root = Path(test_data.__path__[0]).resolve()
+        else:
+            dataset_root = Path(datasets.__path__[0]).resolve()
 
     except FileNotFoundError:
         logger.error("Dataset path not found")
