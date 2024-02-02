@@ -44,7 +44,7 @@ os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 # llm = ChatOpenAI(callbacks=[temp_reporter]).configurable_fields(
 
 # # UNCOMMENT FOR LIVE OPENAI LLM
-llm = ChatOpenAI().configurable_fields(
+llm = ChatOpenAI(max_tokens=10).configurable_fields(
     openai_api_key=ConfigurableField(
         id="api_key",
         name="OpenAI API Key",
@@ -53,7 +53,7 @@ llm = ChatOpenAI().configurable_fields(
     openai_organization=ConfigurableField(
         id="organization",
         name="OpenAI Organization",
-        description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization."
+        description="For users who belong to multiple organizations, you can pass a header to specify which organization is used for an API request. Usage from these API requests will count as usage for the specified organization.",
     ),
     model_name=ConfigurableField(
         id="model",
@@ -64,7 +64,7 @@ llm = ChatOpenAI().configurable_fields(
         id="temperature",
         name="LLM Temperature",
         description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
-    )
+    ),
 )
 
 
@@ -135,7 +135,8 @@ def combine_docs(docs) -> str:
 
 collapse_chain: Runnable[Any, str] = (
     {
-        "docs_in_template": {"context": combine_docs} | RunnableLambda(
+        "docs_in_template": {"context": combine_docs}
+        | RunnableLambda(
             lambda x: populate_template(
                 x, template=prompts["collapser_prompt_template"]
             )
@@ -200,7 +201,8 @@ collapse = RunnableLambda(_collapse)
 
 reduce_chain: Runnable[Any, str] = (
     {
-        "docs_in_template": {"context": combine_docs} | RunnableLambda(
+        "docs_in_template": {"context": combine_docs}
+        | RunnableLambda(
             lambda x: populate_template(x, template=prompts["combiner_prompt_template"])
         )
     }
@@ -325,6 +327,8 @@ async def map_reduce(
         )
 
     # run chain
+    # Passing a dict instead of runnable config is undocumented and works
+    # TODO: Look for an alternative LCEL compliant solution
     result = await map_reduce_chain.with_config(combined_configs).ainvoke(docs)
     # result = await map_reduce_chain.ainvoke(docs, config=combined_configs)
 

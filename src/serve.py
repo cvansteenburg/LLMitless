@@ -1,21 +1,18 @@
 import os
 from enum import StrEnum
-from typing import Annotated, Any, Coroutine
+from typing import Annotated
 
 import sentry_sdk
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, status
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from langchain.callbacks import get_openai_callback
-from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
 from src.chains.map_reduce import map_reduce
-from src.models.dataset_model import DatasetFileFormatNames
 from src.parsers.html_parse import PARSE_FNS
 from src.services.io import (
-    DATASET_PATH,
     DocumentContents,
+    FileFilter,
     SummarizationTestPrompt,
     filter_files,
     transform_raw_docs,
@@ -46,7 +43,7 @@ load_dotenv(env_file)
 
 
 app = FastAPI(
-    title='llmitless',
+    title="llmitless",
     description=(
         "Simple scaffolding, testbed, and API endpoints for building, testing, and"
         " deploying LLM chains."
@@ -61,6 +58,7 @@ logger = init_logging(CONFIG_FILE)
 
 CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 
+
 # Make sure we're live
 @app.get("/")
 async def root():
@@ -68,23 +66,7 @@ async def root():
     return {"message": "Hello World"}
 
 
-class FileFilter(BaseModel):
-    collection_digits: str = Field(
-        ...,
-        title="Collection digits",
-        description='Usually a 3 digit number expressed as a string eg. "010"',
-    )
-    title_digits: list[str] = Field(
-        ...,
-        title="Title digits",
-        description=(
-            'A list of usually 3 digit numbers expressed as a strings eg. ["001",'
-            ' "002", "009"]'
-        ),
-    )
-
-
-class Preprocessor(BaseModel):
+class PreprocessorConfig(BaseModel):
     max_tokens_per_doc: int = Field(
         default=3000,
         title="Max tokens per doc",
@@ -105,7 +87,7 @@ class Preprocessor(BaseModel):
     )
 
 
-class SummarizeMapReduce(BaseModel):
+class MapReduceConfigs(BaseModel):
     core_prompt: str | None = Field(
         default=None,
         title="core prompt",
@@ -164,27 +146,23 @@ class SummarizeMapReduce(BaseModel):
     )
 
 
-class UserLLMConfig(BaseModel):
-    organization: str | None = (
-        Field(
-            default=None,
-            title="Organization",
-            description=(
-                "For users who belong to multiple organizations, you can pass a header"
-                " to specify which organization is used for an API request. Usage from"
-                " these API requests will count as usage for the specified"
-                " organization."
-            ),
+class LLMConfigs(BaseModel):
+    organization: str | None = Field(
+        default=None,
+        title="Organization",
+        description=(
+            "For users who belong to multiple organizations, you can pass a header"
+            " to specify which organization is used for an API request. Usage from"
+            " these API requests will count as usage for the specified"
+            " organization."
         ),
     )
-    model: str | None = (
-        Field(
-            default=None,
-            title="Model name",
-            description=(
-                "The model to use for LLM calls. If not specified, defaults to"
-                " gpt-3.5-turbo"
-            ),
+    model: str | None = Field(
+        default=None,
+        title="Model name",
+        description=(
+            "The model to use for LLM calls. If not specified, defaults to"
+            " gpt-3.5-turbo"
         ),
     )
     temperature: float | None = Field(
@@ -225,7 +203,11 @@ class SummarizationResult(BaseModel):
     usage_report: str
 
 
-@app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents")
+@app.post(
+    "/summarize/{input_doc_format}",
+    summary="Summarize a list of documents",
+    operation_id="summarize",
+)
 async def summarize(
     api_key: Annotated[
         str,
@@ -237,9 +219,9 @@ async def summarize(
     ],
     input_doc_format: InputDocFormat,
     docs_to_summarize: list[DocumentContents],
-    preprocessor: Preprocessor,
-    summarize_map_reduce: SummarizeMapReduce,
-    llm_config: UserLLMConfig,
+    preprocessor: PreprocessorConfig,
+    summarize_map_reduce: MapReduceConfigs,
+    llm_config: LLMConfigs,
     auth: CheckBasicAuth,
 ) -> SummarizationResult:
     """
@@ -296,7 +278,7 @@ async def summarize(
         )
 
 
-@app.post("/summarize_from_disk")
+@app.post("/summarize_from_disk", operation_id="summarize_from_disk")
 async def summarize_from_disk(
     api_key: Annotated[
         str,
@@ -307,9 +289,9 @@ async def summarize_from_disk(
         ),
     ],
     file_filter: FileFilter,
-    preprocessor: Preprocessor,
-    summarize_map_reduce: SummarizeMapReduce,
-    llm_config: UserLLMConfig,
+    preprocessor_config: PreprocessorConfig,
+    summarize_map_reduce: MapReduceConfigs,
+    llm_config: LLMConfigs,
     auth: CheckBasicAuth,
 ) -> SummarizationResult:
     """
@@ -322,18 +304,13 @@ async def summarize_from_disk(
         )
 
     try:
-        input_files = filter_files(
-            collection_digits=file_filter.collection_digits,
-            dataset=DATASET_PATH,
-            title_digits=file_filter.title_digits,
-            file_format=DatasetFileFormatNames.HTML,
-        )
+        input_files = filter_files(file_filter)
 
-        preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
+        preprocessor = transform_raw_docs(
             input_files,
             PARSE_FNS["markdownify_html_to_md"],
-            preprocessor.max_tokens_per_doc,
-            preprocessor.metadata_to_include,
+            preprocessor_config.max_tokens_per_doc,
+            preprocessor_config.metadata_to_include,
         )
 
         parsed_documents = await preprocessor
