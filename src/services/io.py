@@ -68,10 +68,10 @@ class DocumentContents(BaseModel):
         ),
     )
 
-# TODO: fix type issue
+
 def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     return [
-        Document(page_content=source.page_content, metadata=source.metadata)
+        Document(page_content=source.page_content, metadata=source.metadata if source.metadata else dict())
         for source in sources
     ]
 
