@@ -325,6 +325,8 @@ async def map_reduce(
         )
 
     # run chain
+    # Passing a dict instead of runnable config is undocumented and works
+    # TODO: Look for an alternative LCEL compliant solution 
     result = await map_reduce_chain.with_config(combined_configs).ainvoke(docs)
     # result = await map_reduce_chain.ainvoke(docs, config=combined_configs)
 

@@ -86,7 +86,7 @@ class PreprocessorConfig(BaseModel):
     )
 
 
-class SummarizeMapReduce(BaseModel):
+class MapReduceConfigs(BaseModel):
     core_prompt: str | None = Field(
         default=None,
         title="core prompt",
@@ -145,7 +145,7 @@ class SummarizeMapReduce(BaseModel):
     )
 
 
-class UserLLMConfig(BaseModel):
+class LLMConfigs(BaseModel):
     organization: str = Field(
         default=None,
         title="Organization",
@@ -215,8 +215,8 @@ async def summarize(
     input_doc_format: InputDocFormat,
     docs_to_summarize: list[DocumentContents],
     preprocessor: PreprocessorConfig,
-    summarize_map_reduce: SummarizeMapReduce,
-    llm_config: UserLLMConfig,
+    summarize_map_reduce: MapReduceConfigs,
+    llm_config: LLMConfigs,
     auth: CheckBasicAuth,
 ) -> SummarizationResult:
     """
@@ -285,8 +285,8 @@ async def summarize_from_disk(
     ],
     file_filter: FileFilter,
     preprocessor_config: PreprocessorConfig,
-    summarize_map_reduce: SummarizeMapReduce,
-    llm_config: UserLLMConfig,
+    summarize_map_reduce: MapReduceConfigs,
+    llm_config: LLMConfigs,
     auth: CheckBasicAuth,
 ) -> SummarizationResult:
     """
