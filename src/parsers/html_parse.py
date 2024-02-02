@@ -1,6 +1,6 @@
 import re
 from types import MappingProxyType
-from typing import cast
+from typing import Callable, cast
 
 from bs4 import BeautifulSoup as soup
 from bs4.element import Tag
@@ -81,7 +81,7 @@ def string_input_passthrough(input: str) -> str:
 
 
 # NOTE: Fns must take only one arg for use in LLM chains. If more are needed, use partial
-_parse_fns = {
+_parse_fns: dict[str, Callable[[str], str]] = {
     "unstructured_HTML_to_text": unstructured_html_to_text,
     "bs_html_to_text": bs_html_to_text,
     "markdownify_html_to_md": markdownify_html_to_md,

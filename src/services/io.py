@@ -12,7 +12,7 @@ from fastapi import HTTPException, status
 from langchain.callbacks import get_openai_callback
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain_core.documents import Document
-from pydantic import BaseModel, Field, field_validator, validator
+from pydantic import BaseModel, Field, field_validator
 
 import datasets
 from src.models.dataset_model import DatasetFileFormatNames
