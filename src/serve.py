@@ -146,7 +146,7 @@ class MapReduceConfigs(BaseModel):
 
 
 class LLMConfigs(BaseModel):
-    organization: str = Field(
+    organization: str | None = Field(
         default=None,
         title="Organization",
         description=(
@@ -202,7 +202,7 @@ class SummarizationResult(BaseModel):
     usage_report: str
 
 
-@app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents")
+@app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents", operation_id="summarize")
 async def summarize(
     api_key: Annotated[
         str,
@@ -273,7 +273,7 @@ async def summarize(
         )
 
 
-@app.post("/summarize_from_disk")
+@app.post("/summarize_from_disk", operation_id="summarize_from_disk")
 async def summarize_from_disk(
     api_key: Annotated[
         str,
