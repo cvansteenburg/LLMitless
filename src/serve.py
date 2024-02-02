@@ -43,7 +43,7 @@ load_dotenv(env_file)
 
 
 app = FastAPI(
-    title='llmitless',
+    title="llmitless",
     description=(
         "Simple scaffolding, testbed, and API endpoints for building, testing, and"
         " deploying LLM chains."
@@ -57,6 +57,7 @@ logger = init_logging(CONFIG_FILE)
 #     app.add_middleware(HTTPSRedirectMiddleware)
 
 CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
+
 
 # Make sure we're live
 @app.get("/")
@@ -157,13 +158,13 @@ class LLMConfigs(BaseModel):
         ),
     )
     model: str | None = Field(
-            default=None,
-            title="Model name",
-            description=(
-                "The model to use for LLM calls. If not specified, defaults to"
-                " gpt-3.5-turbo"
-            ),
-        )
+        default=None,
+        title="Model name",
+        description=(
+            "The model to use for LLM calls. If not specified, defaults to"
+            " gpt-3.5-turbo"
+        ),
+    )
     temperature: float | None = Field(
         default=None,
         title="Temperature",
@@ -202,7 +203,11 @@ class SummarizationResult(BaseModel):
     usage_report: str
 
 
-@app.post("/summarize/{input_doc_format}", summary="Summarize a list of documents", operation_id="summarize")
+@app.post(
+    "/summarize/{input_doc_format}",
+    summary="Summarize a list of documents",
+    operation_id="summarize",
+)
 async def summarize(
     api_key: Annotated[
         str,

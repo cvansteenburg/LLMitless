@@ -71,7 +71,10 @@ class DocumentContents(BaseModel):
 
 def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     return [
-        Document(page_content=source.page_content, metadata=source.metadata if source.metadata else dict())
+        Document(
+            page_content=source.page_content,
+            metadata=source.metadata if source.metadata else dict(),
+        )
         for source in sources
     ]
 
@@ -158,7 +161,7 @@ class FileFilter(BaseModel):
     )
     file_format: DatasetFileFormatNames = DatasetFileFormatNames.HTML
 
-    @field_validator('title_digits', 'collection_digits')
+    @field_validator("title_digits", "collection_digits")
     @classmethod
     def validate_title_digits(cls, v):
         if v is not None and not 0 <= v <= 99999:
@@ -239,6 +242,7 @@ def filter_files(filter_inputs: FileFilter) -> list[Path]:
 def read_file_content(file_path: Path) -> str:
     with open(file_path, "r") as content_file:
         return content_file.read()
+
 
 # TODO: factor out "for file_path in input_file_paths:" section, always return a list
 def parse_files_from_paths(
@@ -377,6 +381,7 @@ def combine_document_content(
 
     return content_as_str
 
+
 # TODO: use acollapse docs, and copy it in here instead of using langchain's fn
 def consolidate_lists(
     source_lists: list[list[Document]], combine_doc_fn, **kwargs
@@ -385,6 +390,7 @@ def consolidate_lists(
     for list in source_lists:
         collapsed_docs.append(collapse_docs(list, combine_doc_fn, **kwargs))
     return collapsed_docs
+
 
 @overload
 async def transform_raw_docs(
@@ -402,6 +408,8 @@ async def transform_raw_docs(
     metadata_to_include: list[str] | None = None,
     **kwargs,
 ) -> list[Document]: ...
+
+
 # TODO: move typeerror check to parse_files fns
 async def transform_raw_docs(
     input_files,
