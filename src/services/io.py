@@ -4,14 +4,15 @@ from datetime import datetime
 from enum import StrEnum
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Coroutine, cast, overload
+from typing import Any, Callable, Coroutine, overload
 
 import tiktoken
 from dotenv import load_dotenv
+from fastapi import HTTPException, status
 from langchain.callbacks import get_openai_callback
 from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain_core.documents import Document
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, validator
 
 import datasets
 from src.models.dataset_model import DatasetFileFormatNames
@@ -26,8 +27,6 @@ load_dotenv()
 logger = getLogger(__name__)
 
 OUTPUT_PATH = Path(output.__path__[0]).resolve()
-
-DATASET_PATH = Path(datasets.__path__[0]).resolve()
 
 
 # NOTE: Current implementation doesn't count tokens in metadata, which may be added to LLM context later
@@ -143,12 +142,31 @@ def split_large_docs(
     return docs_list
 
 
-def filter_files(
-    collection_digits: str,
-    dataset: Path = DATASET_PATH,
-    title_digits: list[str] | None = None,
-    file_format: DatasetFileFormatNames = DatasetFileFormatNames.HTML,
-) -> list[Path]:
+class FileFilter(BaseModel):
+    collection_digits: str = Field(
+        ...,
+        title="Collection digits",
+        description='Usually a 3 digit number expressed as a string eg. "010"',
+    )
+    title_digits: list[int] | None = Field(
+        ...,
+        title="Title digits",
+        description=(
+            'A list of usually 3 digit numbers expressed as a strings eg. ["001",'
+            ' "002", "009"]'
+        ),
+    )
+    file_format: DatasetFileFormatNames = DatasetFileFormatNames.HTML
+
+    @field_validator('title_digits', 'collection_digits')
+    @classmethod
+    def validate_title_digits(cls, v):
+        if v is not None and not 0 <= v <= 99999:
+            raise ValueError("Each int in title_digits may be up to 5 digits in length")
+        return v
+
+
+def filter_files(filter_inputs: FileFilter) -> list[Path]:
     """
     Filters and returns a list of file paths from a dataset directory based on the provided criteria.
 
@@ -159,8 +177,6 @@ def filter_files(
 
     Args:
         collection_digits: A string of (usually 3) digits that the dataset collection name should start with.
-        dataset: A pathlib.Path object representing the base dataset directory. Defaults to the
-                 global DATASET_PATH.
         title_digits: An optional list of strings containing digits (usually 3) that the title directories
                       within the dataset should start with. If None, all titles in the collection
                       are included.
@@ -173,20 +189,49 @@ def filter_files(
     Raises:
         None
     """
-    primary_dir = next(dataset.glob(f"{collection_digits}*"), None)
+    _col_digits = filter_inputs.collection_digits
+    _title_digits = filter_inputs.title_digits
+    _file_format = filter_inputs.file_format.value
+
+    try:
+        dataset_root = Path(datasets.__path__[0]).resolve()
+
+    except FileNotFoundError:
+        logger.error("Dataset path not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dataset path not found",
+        )
+
+    primary_dir = next(dataset_root.glob(f"{_col_digits}*"), None)
 
     if primary_dir is None:
-        return []
+        logger.error(
+            f"Could not find collection {_col_digits} in dataset {dataset_root}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Could not find collection {_col_digits} in dataset {dataset_root}",
+        )
 
-    if title_digits is None:
-        return list(primary_dir.rglob(file_format.value))
+    if _title_digits is None:
+        return list(primary_dir.rglob(_file_format))
 
-    filtered_files = []
+    filtered_files: list[Path] = []
 
-    for digits in title_digits:
+    for digits in _title_digits:
         target_dirs = [dir for dir in primary_dir.glob(f"{digits}*") if dir.is_dir()]
         for dir in target_dirs:
-            filtered_files.extend(dir.glob(file_format.value))
+            filtered_files.extend(dir.glob(_file_format))
+
+    if not filtered_files:
+        logger.error(
+            f"Could not find any files matching {_file_format} in collection {_col_digits} in dataset {dataset_root}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Could not find any files matching {_file_format} in collection {_col_digits} in dataset {dataset_root}",
+        )
 
     return filtered_files
 
@@ -198,21 +243,18 @@ def read_file_content(file_path: Path) -> str:
 # TODO: factor out "for file_path in input_file_paths:" section, always return a list
 def parse_files_from_paths(
     input_file_paths: list[Path],
-    parse_function: Callable[[str, Any], str] = (lambda x: x),
+    parse_function: Callable[[str], str] = lambda x: x,
     *,
-    return_docs: bool = True,
     write_to_file: bool = False,
     output_path: Path = OUTPUT_PATH,
     output_base_name: str = "combined",
     output_format: str = "txt",
     **kwargs: Any,
-) -> list[DocumentContents] | None:
+) -> list[DocumentContents]:
     """
     Reads files from disk, parses them using the provided parse_function, and optionally
-    writes them to disk and/or returns them. return_docs and write_to_file cannot both be False.
+    writes them to disk and always returns them.
     """
-    if not (return_docs or write_to_file):
-        raise ValueError("Either return_docs or write_to_file must be True.")
 
     output_base_name = output_base_name.join(
         datetime.now().isoformat(timespec="milliseconds").split("T")
@@ -228,21 +270,18 @@ def parse_files_from_paths(
                 _title_name = f"{file_path.parent.name}/{file_path.name}"
                 _metadata = {"title": f"{_title_name}"}
                 _content = read_file_content(file_path)
-                _parsed_content: str = parse_function(_content, **kwargs)
+                _parsed_content = parse_function(_content, **kwargs)
                 output_file.write(f"DOC: {_title_name}\n{_parsed_content}\n\n")
-                if return_docs:
-                    docs.append(
-                        DocumentContents(
-                            page_content=_parsed_content, metadata=_metadata
-                        )
-                    )
+                docs.append(
+                    DocumentContents(page_content=_parsed_content, metadata=_metadata)
+                )
 
     else:
         for file_path in input_file_paths:
             _title_name = f"{file_path.parent.name}/{file_path.name}"
             _metadata = {"title": f"{_title_name}"}
             _content = read_file_content(file_path)
-            _parsed_content: str = parse_function(_content, **kwargs)
+            _parsed_content = parse_function(_content, **kwargs)
             docs.append(
                 DocumentContents(page_content=_parsed_content, metadata=_metadata)
             )
@@ -252,9 +291,9 @@ def parse_files_from_paths(
 
 def parse_files(
     input_files: list[DocumentContents],
-    parse_function: Callable[[str, Any], str] = (lambda x: x),
+    parse_function: Callable[[str], str] = (lambda x: x),
     **kwargs: Any,
-) -> list[DocumentContents] | None:
+) -> list[DocumentContents]:
     """
     Parses files using the provided parse_function.
     output_format should match output format of chosen parse_function
@@ -350,7 +389,7 @@ def consolidate_lists(
 @overload
 async def transform_raw_docs(
     input_files: list[Path],
-    parse_fn: Callable[[str, Any], str],
+    parse_fn: Callable[[str], str],
     max_tokens_per_doc: int,
     metadata_to_include: list[str] | None = None,
     **kwargs,
@@ -358,7 +397,7 @@ async def transform_raw_docs(
 @overload
 async def transform_raw_docs(
     input_files: list[DocumentContents],
-    parse_fn: Callable[[str, Any], str],
+    parse_fn: Callable[[str], str],
     max_tokens_per_doc: int,
     metadata_to_include: list[str] | None = None,
     **kwargs,
@@ -366,7 +405,7 @@ async def transform_raw_docs(
 # TODO: move typeerror check to parse_files fns
 async def transform_raw_docs(
     input_files,
-    parse_fn: Callable[[str, Any], str],
+    parse_fn: Callable[[str], str],
     max_tokens_per_doc: int,
     metadata_to_include: list[str] | None = None,
     **kwargs,

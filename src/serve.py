@@ -8,14 +8,14 @@ from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from langchain.callbacks import get_openai_callback
 from langchain_core.documents import Document
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.chains.map_reduce import map_reduce
 from src.models.dataset_model import DatasetFileFormatNames
 from src.parsers.html_parse import PARSE_FNS
 from src.services.io import (
-    DATASET_PATH,
     DocumentContents,
+    FileFilter,
     SummarizationTestPrompt,
     filter_files,
     transform_raw_docs,
@@ -66,22 +66,6 @@ CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 async def root():
     logger.info("Hello World")
     return {"message": "Hello World"}
-
-
-class FileFilter(BaseModel):
-    collection_digits: str = Field(
-        ...,
-        title="Collection digits",
-        description='Usually a 3 digit number expressed as a string eg. "010"',
-    )
-    title_digits: list[str] = Field(
-        ...,
-        title="Title digits",
-        description=(
-            'A list of usually 3 digit numbers expressed as a strings eg. ["001",'
-            ' "002", "009"]'
-        ),
-    )
 
 
 class Preprocessor(BaseModel):
@@ -317,13 +301,10 @@ async def summarize_from_disk(
             detail="Pass an API key for the summarization LLM. OpenAI is default",
         )
 
+
+
     try:
-        input_files = filter_files(
-            collection_digits=file_filter.collection_digits,
-            dataset=DATASET_PATH,
-            title_digits=file_filter.title_digits,
-            file_format=DatasetFileFormatNames.HTML,
-        )
+        input_files = filter_files(file_filter)
 
         preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
             input_files,
