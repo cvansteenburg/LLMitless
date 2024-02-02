@@ -1,12 +1,11 @@
 import os
 from enum import StrEnum
-from typing import Annotated, Any, Coroutine
+from typing import Annotated
 
 import sentry_sdk
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from langchain.callbacks import get_openai_callback
-from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
 from src.chains.map_reduce import map_reduce
@@ -66,7 +65,7 @@ async def root():
     return {"message": "Hello World"}
 
 
-class Preprocessor(BaseModel):
+class PreprocessorConfig(BaseModel):
     max_tokens_per_doc: int = Field(
         default=3000,
         title="Max tokens per doc",
@@ -215,7 +214,7 @@ async def summarize(
     ],
     input_doc_format: InputDocFormat,
     docs_to_summarize: list[DocumentContents],
-    preprocessor: Preprocessor,
+    preprocessor: PreprocessorConfig,
     summarize_map_reduce: SummarizeMapReduce,
     llm_config: UserLLMConfig,
     auth: CheckBasicAuth,
@@ -285,7 +284,7 @@ async def summarize_from_disk(
         ),
     ],
     file_filter: FileFilter,
-    preprocessor: Preprocessor,
+    preprocessor_config: PreprocessorConfig,
     summarize_map_reduce: SummarizeMapReduce,
     llm_config: UserLLMConfig,
     auth: CheckBasicAuth,
@@ -299,16 +298,14 @@ async def summarize_from_disk(
             detail="Pass an API key for the summarization LLM. OpenAI is default",
         )
 
-
-
     try:
         input_files = filter_files(file_filter)
 
-        preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
+        preprocessor = transform_raw_docs(
             input_files,
             PARSE_FNS["markdownify_html_to_md"],
-            preprocessor.max_tokens_per_doc,
-            preprocessor.metadata_to_include,
+            preprocessor_config.max_tokens_per_doc,
+            preprocessor_config.metadata_to_include,
         )
 
         parsed_documents = await preprocessor
