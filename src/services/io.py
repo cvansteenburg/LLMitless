@@ -240,6 +240,16 @@ def filter_files(filter_inputs: FileFilter, test_root: bool = False) -> list[Pat
 
     for digits in _title_digits:
         target_dirs = [dir for dir in primary_dir.glob(f"{digits}*") if dir.is_dir()]
+
+        if not target_dirs:
+            logger.error(
+                f"Could not find any title directories matching {digits} in collection {_col_digits} in dataset {dataset_root}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Could not find any title directories matching {digits} in collection {_col_digits} in dataset {dataset_root}",
+            )
+        
         for dir in target_dirs:
             filtered_files.extend(dir.glob(_file_format))
 

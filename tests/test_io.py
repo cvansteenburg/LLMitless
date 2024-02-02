@@ -87,7 +87,7 @@ def test_matching_collection_and_multiple_title_digits(file_format_checks):
         assert file_path.is_file(), f"Path {file_path} is not a file."
 
 # Test when the file_format specified matches files in the directories
-def test_existing_file_format(dataset_path, file_format_checks):
+def test_existing_file_format(file_format_checks):
     file_format, expected_file_name = file_format_checks
     filter_inputs = FileFilter(
         collection_digits='000',
@@ -99,18 +99,32 @@ def test_existing_file_format(dataset_path, file_format_checks):
     assert any(expected_file_name in file_path.name for file_path in result), \
         f"Expected files to match the {file_format.value} format."
 
-# Test ensuring that it returns an empty list when no matches are found
-def test_no_matches_found(dataset_path):
-    result = filter_files('999', dataset_path, title_digits=['nonexistent_title'], file_format=DatasetFileFormatNames.HTML)
+# Should raise an error when no matches are found
+def test_no_matches_found():
+    filter_inputs = FileFilter(
+        collection_digits='999',
+        title_digits=['99991'],
+        file_format=DatasetFileFormatNames.HTML
+    )
     
-    assert len(result) == 0, "Expected no files to be returned when no matches are found."
+    with pytest.raises(HTTPException) as exc_info:
+        result = filter_files(filter_inputs, test_root=True)
+        assert exc_info.value.status_code == 404
+        assert "Could not find any files matching" in exc_info.value.detail
 
 # Test when title_digits is provided but does not match any subdirectory
-def test_no_files_matching_title_digits(dataset_path, file_format_checks):
+def test_no_files_matching_title_digits(file_format_checks):
     file_format, _ = file_format_checks
-    result = filter_files('001', dataset_path, title_digits=['999'], file_format=file_format)
-    
-    assert len(result) == 0, "Expected no files to be returned when title digits do not match any subdirectory."
+    filter_inputs = FileFilter(
+        collection_digits='001',
+        title_digits=['999'],
+        file_format=file_format
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        result = filter_files(filter_inputs, test_root=True)
+        assert exc_info.value.status_code == 404
+        assert "Could not find any files matching" in exc_info.value.detail
 
 
 # TODO: add test for new parse_files_from_paths
