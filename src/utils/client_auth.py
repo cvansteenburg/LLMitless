@@ -9,9 +9,16 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 logger = getLogger(__name__)
 
-basic_security = HTTPBasic()
+async def security():
+    try:
+        basic_security = HTTPBasic()
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
 
-BasicCreds = Annotated[HTTPBasicCredentials, Depends(basic_security)]
+    return basic_security
+
+
+BasicCreds = Annotated[HTTPBasicCredentials, Depends(security)]
 
 
 # Basic security until we implement more robust auth
@@ -19,11 +26,7 @@ async def check_basic_auth(credentials: BasicCreds) -> bool:
     BASIC_AUTH_USERNAME = os.getenv("BASIC_AUTH_USERNAME")
     BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD")
 
-    # Set Sentry context to capture the actual values from the environment
-    sentry_sdk.set_context("environment_variables", {
-        "BASIC_AUTH_USERNAME": BASIC_AUTH_USERNAME,
-        "BASIC_AUTH_PASSWORD": BASIC_AUTH_PASSWORD,
-    })
+    sentry_sdk.capture_message(f"BASIC_AUTH_USERNAME: {BASIC_AUTH_USERNAME}, BASIC_AUTH_PASSWORD: {BASIC_AUTH_PASSWORD}")
 
     UNAUTH_EXC = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,6 +44,9 @@ async def check_basic_auth(credentials: BasicCreds) -> bool:
             )
             if correct_username and correct_password:
                 return True
+            
+            sentry_sdk.capture_message(f"Incorrect username or password: {credentials.username} - {credentials.password}, CORRECT USERNAME: {correct_username}, CORRECT PASSWORD: {correct_password}")
+
 
         raise UNAUTH_EXC
 
