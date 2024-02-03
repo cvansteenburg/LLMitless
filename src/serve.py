@@ -1,3 +1,4 @@
+import logging
 import os
 from enum import StrEnum
 from typing import Annotated
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from langchain.callbacks import get_openai_callback
 from pydantic import BaseModel, Field
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from src.chains.map_reduce import map_reduce
 from src.parsers.html_parse import PARSE_FNS
@@ -20,8 +22,15 @@ from src.services.io import (
 from src.utils.client_auth import check_basic_auth
 from src.utils.logging_init import init_logging
 
+sentry_logging = LoggingIntegration(
+    level=logging.DEBUG,  # Capture info and higher as breadcrumbs
+    event_level=logging.ERROR  # Send errors as events
+)
+
 sentry_sdk.init(
     dsn="https://e6e80ca172e765ec75ad49a1137e2529@o4506601226764288.ingest.sentry.io/4506601237839872",
+    integrations=[sentry_logging],
+    debug=True,
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     traces_sample_rate=1.0,
