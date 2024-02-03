@@ -63,6 +63,10 @@ jobs:
         run: |
           gcloud secrets create OPENAI_API_KEY --replication-policy="automatic" --project=ggl-llmitless-p-rap-284d || true
           gcloud secrets versions add OPENAI_API_KEY --data-file=- <<< ${{ secrets.OPENAI_API_KEY }}
+          gcloud secrets create BASIC_AUTH_USERNAME --replication-policy="automatic" --project=ggl-llmitless-p-rap-284d || true
+          gcloud secrets versions add BASIC_AUTH_USERNAME --data-file=- <<< ${{ secrets.BASIC_AUTH_USERNAME }}
+          gcloud secrets create BASIC_AUTH_PASSWORD --replication-policy="automatic" --project=ggl-llmitless-p-rap-284d || true
+          gcloud secrets versions add BASIC_AUTH_PASSWORD --data-file=- <<< ${{ secrets.BASIC_AUTH_PASSWORD }}
 
       - name: Deploy to Google Cloud Run
         id: deploy_to_cloud_run
@@ -74,7 +78,7 @@ jobs:
           # Pass args Cloud Run will use to start the service in the container
           flags: |
             --set-env-vars=WANDB_API_KEY=${{ secrets.WANDB_API_KEY }}
-            --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest
+            --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,BASIC_AUTH_USERNAME=BASIC_AUTH_USERNAME:latest,BASIC_AUTH_PASSWORD=BASIC_AUTH_PASSWORD:latest
             --args=uvicorn,src.serve:app,--host,0.0.0.0,--port,8080
           # Set up a separate runtime service account for added security and enable here.
           # Must be different from service account authorized above - Cloud Run will use this account.
