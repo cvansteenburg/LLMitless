@@ -244,8 +244,11 @@ async def summarize(
             preprocessor.metadata_to_include,
         )
 
-        if summarize_map_reduce.core_prompt is None:
-            prompt = SummarizationTestPrompt.SIMPLE.value
+        prompt = (
+            summarize_map_reduce.core_prompt
+            if summarize_map_reduce.core_prompt
+            else SummarizationTestPrompt.SIMPLE.value
+        )
 
         with get_openai_callback() as cb:
             summary = await map_reduce(
