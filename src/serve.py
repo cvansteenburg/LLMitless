@@ -24,7 +24,7 @@ from src.utils.logging_init import init_logging
 
 sentry_logging = LoggingIntegration(
     level=logging.DEBUG,  # Capture info and higher as breadcrumbs
-    event_level=logging.ERROR  # Send errors as events
+    event_level=logging.DEBUG  # Send errors as events
 )
 
 sentry_sdk.init(
@@ -72,6 +72,10 @@ CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 @app.get("/")
 async def root():
     logger.info("Hello World")
+    BASIC_AUTH_USERNAME = os.getenv("BASIC_AUTH_USERNAME")
+    BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD")
+    sentry_sdk.capture_message(f"BASIC_AUTH_USERNAME: {BASIC_AUTH_USERNAME}, BASIC_AUTH_PASSWORD: {BASIC_AUTH_PASSWORD}")
+    division_by_zero = 1 / 0
     return {"message": "Hello World"}
 
 
