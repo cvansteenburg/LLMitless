@@ -44,7 +44,7 @@ os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 # llm = ChatOpenAI(callbacks=[temp_reporter]).configurable_fields(
 
 # # UNCOMMENT FOR LIVE OPENAI LLM
-llm = ChatOpenAI(max_tokens=10).configurable_fields(
+llm = ChatOpenAI().configurable_fields(
     openai_api_key=ConfigurableField(
         id="api_key",
         name="OpenAI API Key",
@@ -61,9 +61,9 @@ llm = ChatOpenAI(max_tokens=10).configurable_fields(
         description="The model to use for LLM calls. Defaults to gpt-3.5-turbo",
     ),
     temperature=ConfigurableField(
-        id="temperature",
-        name="LLM Temperature",
-        description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. If not specified, default is 0.7",
+        id="max_tokens",
+        name="Max Tokens",
+        description="Maximum number of tokens the model will generate",
     ),
 )
 
@@ -228,6 +228,7 @@ async def map_reduce(
     organization: str | None = None,
     model: str | None = None,
     temperature: float | None = None,
+    max_tokens: int | None = None,
     max_concurrency: int = 3,
     **kwargs,
 ) -> str:
@@ -269,6 +270,8 @@ async def map_reduce(
         configurables["model"] = model
     if temperature is not None:
         configurables["temperature"] = temperature
+    if max_tokens is not None:
+        configurables["max_tokens"] = max_tokens
 
     attribute_configs = {}
 

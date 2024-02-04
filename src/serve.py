@@ -174,6 +174,14 @@ class LLMConfigs(BaseModel):
             " specified, default is 0.7"
         ),
     )
+    max_tokens: int | None = Field(
+        default=None,
+        title="Max tokens",
+        description=(
+            "Maximum number of tokens the model will generate. If not specified,"
+            " default is 3000"
+        ),
+    )
 
 
 class InputDocFormat(StrEnum):
@@ -258,6 +266,7 @@ async def summarize(
                 summarize_map_reduce.combine_prompt,
                 api_key=api_key,
                 organization=llm_config.organization,
+                max_tokens=llm_config.max_tokens,
                 model=llm_config.model,
                 temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
@@ -329,6 +338,7 @@ async def summarize_from_disk(
                 summarize_map_reduce.combine_prompt,
                 api_key=api_key,
                 organization=llm_config.organization,
+                max_tokens=llm_config.max_tokens,
                 model=llm_config.model,
                 temperature=llm_config.temperature,
                 max_concurrency=summarize_map_reduce.max_concurrency,
