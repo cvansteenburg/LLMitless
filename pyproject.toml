@@ -32,6 +32,7 @@ transformers = "^4.36.2"
 mypy = "^1.8.0"
 black = "^23.12.1"
 pretty = "^0.1"
+memory-profiler = "^0.61.0"
 
 
 [tool.poetry.group.test.dependencies]
