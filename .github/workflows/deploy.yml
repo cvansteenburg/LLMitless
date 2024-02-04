@@ -61,12 +61,25 @@ jobs:
       # Ensure secrets exist in Google Secret Manager
       - name: Create or version secrets in Google Secret Manager
         run: |
-          gcloud secrets create OPENAI_API_KEY --replication-policy="automatic" --project=ggl-llmitless-p-rap-284d || true
-          gcloud secrets versions add OPENAI_API_KEY --data-file=- <<< ${{ secrets.OPENAI_API_KEY }}
-          gcloud secrets create BASIC_AUTH_USERNAME --replication-policy="automatic" --project=ggl-llmitless-p-rap-284d || true
-          gcloud secrets versions add BASIC_AUTH_USERNAME --data-file=- <<< ${{ secrets.BASIC_AUTH_USERNAME }}
-          gcloud secrets create BASIC_AUTH_PASSWORD --replication-policy="automatic" --project=ggl-llmitless-p-rap-284d || true
-          gcloud secrets versions add BASIC_AUTH_PASSWORD --data-file=- <<< ${{ secrets.BASIC_AUTH_PASSWORD }}
+          PROJECT_ID="ggl-llmitless-p-rap-284d"
+          # Check and create OPENAI_API_KEY secret if it does not exist
+          if ! gcloud secrets describe OPENAI_API_KEY --project=${PROJECT_ID} &> /dev/null; then
+            gcloud secrets create OPENAI_API_KEY --replication-policy="automatic" --project=${PROJECT_ID}
+          fi
+          echo -n "${{ secrets.OPENAI_API_KEY }}" | gcloud secrets versions add OPENAI_API_KEY --data-file=-
+          
+          # Check and create BASIC_AUTH_USERNAME secret if it does not exist
+          if ! gcloud secrets describe BASIC_AUTH_USERNAME --project=${PROJECT_ID} &> /dev/null; then
+            gcloud secrets create BASIC_AUTH_USERNAME --replication-policy="automatic" --project=${PROJECT_ID}
+          fi
+          echo -n "${{ secrets.BASIC_AUTH_USERNAME }}" | gcloud secrets versions add BASIC_AUTH_USERNAME --data-file=-
+          
+          # Check and create BASIC_AUTH_PASSWORD secret if it does not exist
+          if ! gcloud secrets describe BASIC_AUTH_PASSWORD --project=${PROJECT_ID} &> /dev/null; then
+            gcloud secrets create BASIC_AUTH_PASSWORD --replication-policy="automatic" --project=${PROJECT_ID}
+          fi
+          echo -n "${{ secrets.BASIC_AUTH_PASSWORD }}" | gcloud secrets versions add BASIC_AUTH_PASSWORD --data-file=-
+
 
       - name: Deploy to Google Cloud Run
         id: deploy_to_cloud_run
