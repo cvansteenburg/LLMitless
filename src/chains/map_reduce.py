@@ -61,6 +61,11 @@ llm = ChatOpenAI().configurable_fields(
         description="The model to use for LLM calls. Defaults to gpt-3.5-turbo",
     ),
     temperature=ConfigurableField(
+        id="temperature",
+        name="Temperature",
+        description="Controls randomness of the output. Values closer to 0 make output more random, values closer to 1 make output more deterministic. Defaults to 0.7",
+    ),
+    max_tokens=ConfigurableField(
         id="max_tokens",
         name="Max Tokens",
         description="Maximum number of tokens the model will generate",
