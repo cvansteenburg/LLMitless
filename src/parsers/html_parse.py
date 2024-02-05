@@ -5,8 +5,6 @@ from typing import Callable, cast
 from bs4 import BeautifulSoup as soup
 from bs4.element import Tag
 from markdownify import markdownify as md
-from unstructured.chunking.title import chunk_by_title
-from unstructured.partition.html import partition_html
 
 
 def postmark_html_strip_address(html_content: str) -> str:
@@ -43,21 +41,6 @@ def md_strip_extra_nbsp(md_text):
     return re.sub(r"[\xa0\u200c]", "", md_text)
 
 
-def unstructured_html_to_text(content, **kwargs):
-    max_characters = 4000
-    elements = partition_html(text=content, **kwargs)
-    chunks = chunk_by_title(elements, max_characters=max_characters)
-
-    formatted_chunks: str = ""
-    chunk_ct = 0
-
-    for chunk in chunks:
-        formatted_chunks += f"CHUNK COUNT: {chunk_ct}\n\n{chunk}\n\n"
-        chunk_ct += 1
-
-    return formatted_chunks
-
-
 def bs_html_to_text(html_body: str) -> str:
     return soup(html_body, "html5lib").get_text()
 
@@ -82,7 +65,6 @@ def string_input_passthrough(input: str) -> str:
 
 # NOTE: Fns must take only one arg for use in LLM chains. If more are needed, use partial
 _parse_fns: dict[str, Callable[[str], str]] = {
-    "unstructured_HTML_to_text": unstructured_html_to_text,
     "bs_html_to_text": bs_html_to_text,
     "markdownify_html_to_md": markdownify_html_to_md,
     "passthrough": string_input_passthrough,
