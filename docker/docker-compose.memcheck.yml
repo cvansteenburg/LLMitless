@@ -13,7 +13,7 @@ services:
         APPLICATION_DEV_SERVER_PORT: 50201      
     environment:
       - ENV_CONTEXT=production
-      - OPENAI_API_KEY=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
+      - OPENAI_API_KEY=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
       - BASIC_AUTH_USERNAME=MshIlSKyPhy08JHbu18hPpfoZx
       - BASIC_AUTH_PASSWORD=FHdySiAwDWhM9vrX87c5VYY1XIjmN8GvMzmUJ4g
       - WANDB_API_KEY=b50dce90a5be67a2f1b900ab2707d5cb7e41bc59
