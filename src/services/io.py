@@ -452,7 +452,7 @@ async def transform_raw_docs(
 
     except TypeError as e:
         logger.error(
-            f"Error parsing files in html_to_md_documents. TypeError {e}", exc_info=e
+            f"Error parsing files in transform_raw_docs. TypeError {e}", exc_info=e
         )
         raise TypeError("Expected a list of a single type as input")
 

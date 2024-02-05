@@ -1,4 +1,3 @@
-import os
 from functools import partial
 from string import Formatter
 from typing import Any
@@ -21,9 +20,6 @@ from langchain_core.runnables import ConfigurableField
 from src.services.io import count_tokens
 
 load_dotenv()
-
-os.environ["LANGCHAIN_WANDB_TRACING"] = "true"
-os.environ["WANDB_PROJECT"] = "langchain-tracing2"
 
 # UNCOMMENT FOR FAKE LLM
 # from langchain.chat_models import FakeListChatModel  # noqa: E402
