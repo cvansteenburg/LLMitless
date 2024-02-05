@@ -1,4 +1,6 @@
 import os
+import tracemalloc
+from contextlib import asynccontextmanager
 from enum import StrEnum
 from typing import Annotated
 
@@ -42,12 +44,22 @@ env_file = (
 load_dotenv(env_file)
 
 
+
+@asynccontextmanager
+async def app_lifespan(app: FastAPI):
+    tracemalloc.start()
+    try:
+        yield
+    finally:
+        tracemalloc.stop()
+
 app = FastAPI(
     title="llmitless",
     description=(
         "Simple scaffolding, testbed, and API endpoints for building, testing, and"
         " deploying LLM chains."
     ),
+    lifespan=app_lifespan,
 )
 
 CONFIG_FILE = "pyproject.toml"
@@ -63,7 +75,9 @@ CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 @app.get("/")
 async def root():
     logger.info("Hello World")
-    return {"message": "Hello World"}
+    current, peak = tracemalloc.get_traced_memory()
+    return {"current_memory": current, "peak_memory": peak}
+    # return {"message": "Hello World"}
 
 
 class PreprocessorConfig(BaseModel):
@@ -137,7 +151,7 @@ class MapReduceConfigs(BaseModel):
         ),
     )
     collapse_token_max: int = Field(
-        default=6000,
+        default=3200,
         title="Collapse token max",
         description=(
             "In a map-reduce summarization strategy, this is the maximum number of"
@@ -209,6 +223,7 @@ class SummarizationResult(BaseModel):
     status: str
     summary: str
     usage_report: str
+    debug: dict
 
 
 @app.post(
@@ -275,11 +290,13 @@ async def summarize(
             )
 
             usage_report = cb
+            current, peak = tracemalloc.get_traced_memory()
 
         return SummarizationResult(
             status="success",
             summary=summary,
             usage_report=repr(usage_report),
+            debug={"current_memory": current, "peak_memory": peak},
         )
 
     except Exception as e:
@@ -347,10 +364,13 @@ async def summarize_from_disk(
             )
             usage_report = cb
 
+            current, peak = tracemalloc.get_traced_memory()
+
         return SummarizationResult(
             status="success",
             summary=summary,
             usage_report=repr(usage_report),
+            debug={"current_memory": current, "peak_memory": peak},
         )
 
     except Exception as e:
