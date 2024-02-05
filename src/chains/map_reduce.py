@@ -163,8 +163,8 @@ def get_num_tokens(docs: list[Document]) -> int:
 async def _collapse(
     docs,
     config,
-    collapse_token_max=6000,
-    iteration_limit=2,
+    collapse_token_max=3200,
+    iteration_limit=3,
 ):
     collapse_ct = 1
 
