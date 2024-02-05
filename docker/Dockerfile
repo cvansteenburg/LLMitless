@@ -160,3 +160,47 @@ RUN groupadd -g 1001 python_application && \
 RUN chown -R python_application:python_application ${PROJECT_ROOT}
 
 USER 1001
+
+
+################################
+# MEMCHECK-BASE
+# Setup for production image that tracks memory use
+################################
+
+FROM poetry-base as memcheck-base
+
+WORKDIR ${PROJECT_ROOT}
+
+# Install only memcheck dependencies 
+RUN --mount=type=cache,target=${POETRY_CACHE_DIR} \
+    poetry install --only memcheck --no-root
+
+
+################################
+# MEMCHECK-IMAGE
+# Image that mirrors prod but tracks memory use
+################################
+
+FROM poetry-env-base as memcheck-image
+
+ARG APPLICATION_PROD_SERVER_PORT
+
+ENV DEVELOPMENT_STAGE=MEMCHECK
+
+# Copy in our built venv which has our deps
+COPY --from=memcheck-base $VIRTUAL_ENV $VIRTUAL_ENV
+
+WORKDIR ${PROJECT_ROOT}
+# Optional project-specific mkdir. This module is imported by code but populated by
+# user. Create an empty directory to avoid import errors.
+RUN mkdir datasets && touch datasets/__init__.py
+COPY pyproject.toml ./
+# Copy in the core application code
+COPY src ./src
+COPY start_server.py ./
+
+EXPOSE ${APPLICATION_DEV_SERVER_PORT}
+
+# DANGER: note we're the root user to avoid permission errors on memory tracking
+
+CMD ["bash"]
