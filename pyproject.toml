@@ -40,6 +40,10 @@ pytest = "^7.4.3"
 time-machine = "^2.13.0"
 
 
+
+[tool.poetry.group.memcheck.dependencies]
+memray = "^1.11.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

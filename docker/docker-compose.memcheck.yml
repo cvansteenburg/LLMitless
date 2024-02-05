@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  llmitless_app:
+    container_name: LLMitless_memcheck
+    image: ${DOCKER_IMAGE_NAME_PROD:-llmitless_memcheck:latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: memcheck-image
+      args:
+        PROJECT_ROOT: /LLMitless
+        APPLICATION_DEV_SERVER_PORT: 50201      
+    environment:
+      - ENV_CONTEXT=production
+      - OPENAI_API_KEY=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
+      - BASIC_AUTH_USERNAME=MshIlSKyPhy08JHbu18hPpfoZx
+      - BASIC_AUTH_PASSWORD=FHdySiAwDWhM9vrX87c5VYY1XIjmN8GvMzmUJ4g
+      - WANDB_API_KEY=b50dce90a5be67a2f1b900ab2707d5cb7e41bc59
+
+    ports:
+      - "50201:50201"
+    command: ["memray", "run", "start_server.py"]
+
+    # command: |
+    #   /bin/sh -c "echo Container started; \
+    #   trap 'exit 0' 15; \
+    #   while sleep 1 & wait $$!; do :; done"
+    restart: unless-stopped
+
+  ngrok:
+    image: ngrok/ngrok
+    env_file:
+      - ../.env
+    # The env_file option passes vars from files directly to container, so they're not
+    # available in Compose file. We use a script to get them from environment @ runtime.
+    # The ngrok container has a baked-in entrypoint script that will use these args, but
+    # that script can't access env vars, so we get them with custom script, then call original entrypoint
+    entrypoint: >
+      /bin/sh -c '
+      EDGE_VALUE=$$NGROK_EDGE;
+      exec /entrypoint.sh tunnel --label edge="$$EDGE_VALUE" llmitless_app:50201
+      '
+    ports:
+      - "4040:4040" # Optional: Expose ngrok web interface
+    depends_on:
+      - llmitless_app
+    restart: unless-stopped
