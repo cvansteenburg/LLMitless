@@ -34,22 +34,24 @@ sentry_sdk.init(
 )
 
 ENV_CONTEXT = os.getenv("ENV_CONTEXT", "production")
+MEMCHECK = os.getenv("MEMCHECK", False)
 
 # Load the appropriate .env file
 env_file = (
-    ".env.dev"
-    if ENV_CONTEXT == "development"
+    ".env.prod"
+    if ENV_CONTEXT == "production"
     else ".env.test" if ENV_CONTEXT == "test" else ".env"
 )
+
 load_dotenv(env_file)
 
 
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
-    tracemalloc.start()
-    try:
-        yield
-    finally:
+    if MEMCHECK:
+        tracemalloc.start() 
+    yield
+    if MEMCHECK:
         tracemalloc.stop()
 
 app = FastAPI(
@@ -74,9 +76,10 @@ CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 @app.get("/")
 async def root():
     logger.info("Hello World")
-    current, peak = tracemalloc.get_traced_memory()
-    return {"current_memory": current, "peak_memory": peak}
-    # return {"message": "Hello World"}
+    if MEMCHECK:
+        current, peak = tracemalloc.get_traced_memory()
+        return {"current_memory": current, "peak_memory": peak}
+    return {"message": "Hello World"}
 
 
 class PreprocessorConfig(BaseModel):
@@ -222,7 +225,10 @@ class SummarizationResult(BaseModel):
     status: str
     summary: str
     usage_report: str
-    debug: dict
+    debug: dict | None
+
+    class Config:
+        exclude_none = True
 
 
 @app.post(
@@ -289,13 +295,15 @@ async def summarize(
             )
 
             usage_report = cb
-            current, peak = tracemalloc.get_traced_memory()
+            if MEMCHECK:
+                current, peak = tracemalloc.get_traced_memory()
+                debug_info = {"current_memory": current, "peak_memory": peak}
 
         return SummarizationResult(
             status="success",
             summary=summary,
             usage_report=repr(usage_report),
-            debug={"current_memory": current, "peak_memory": peak},
+            debug=debug_info,
         )
 
     except Exception as e:
@@ -363,13 +371,15 @@ async def summarize_from_disk(
             )
             usage_report = cb
 
-            current, peak = tracemalloc.get_traced_memory()
+            if MEMCHECK:
+                current, peak = tracemalloc.get_traced_memory()
+                debug_info = {"current_memory": current, "peak_memory": peak}
 
         return SummarizationResult(
             status="success",
             summary=summary,
             usage_report=repr(usage_report),
-            debug={"current_memory": current, "peak_memory": peak},
+            debug=debug_info,
         )
 
     except Exception as e:
