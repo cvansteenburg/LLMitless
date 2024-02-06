@@ -234,7 +234,7 @@ class SummarizationResult(BaseModel):
 @app.post(
     "/summarize/{input_doc_format}",
     summary="Summarize a list of documents",
-    operation_id="summarize",
+    operation_id="summarize", response_model_exclude_none=True,
 )
 async def summarize(
     api_key: Annotated[
@@ -317,7 +317,7 @@ async def summarize(
         )
 
 
-@app.post("/summarize_from_disk", operation_id="summarize_from_disk")
+@app.post("/summarize_from_disk", operation_id="summarize_from_disk", response_model_exclude_none=True)
 async def summarize_from_disk(
     api_key: Annotated[
         str,
