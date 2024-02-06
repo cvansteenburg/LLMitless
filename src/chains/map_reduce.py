@@ -4,7 +4,6 @@ from typing import Any
 
 from dotenv import load_dotenv
 from langchain.callbacks.tracers import ConsoleCallbackHandler
-from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain.chat_models import ChatOpenAI  # noqa: F401
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document, StrOutputParser
@@ -17,7 +16,7 @@ from langchain.schema.runnable import (
 )
 from langchain_core.runnables import ConfigurableField
 
-from src.services.io import count_tokens
+from src.services.io import collapse_docs, count_tokens, split_list_of_docs
 
 load_dotenv()
 

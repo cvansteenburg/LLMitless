@@ -4,13 +4,12 @@ from datetime import datetime
 from enum import StrEnum
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Coroutine, overload
+from typing import Any, Callable, Coroutine, Protocol, overload
 
 import tiktoken
 from dotenv import load_dotenv
 from fastapi import HTTPException, status
 from langchain.callbacks import get_openai_callback
-from langchain.chains.combine_documents import collapse_docs, split_list_of_docs
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field, field_validator
 
@@ -26,6 +25,7 @@ load_dotenv()
 
 logger = getLogger(__name__)
 
+# TODO: Move this out of the global scope
 OUTPUT_PATH = Path(output.__path__[0]).resolve()
 
 
@@ -79,8 +79,155 @@ def sources_to_docs(sources: list[DocumentContents]) -> list[Document]:
     ]
 
 
+# from langchain.chains.combine_documents.reduce.py
+# class import was memory intensive so we use directly
+class CombineDocsProtocol(Protocol):
+    """Interface for the combine_docs method."""
+
+    def __call__(self, docs: list[Document], **kwargs: Any) -> str:
+        """Interface for the combine_docs method."""
+
+# from langchain.chains.combine_documents.reduce.py
+# class import was memory intensive so we use directly
+def collapse_docs(
+    docs: list[Document],
+    combine_document_func: CombineDocsProtocol,
+    **kwargs: Any,
+) -> Document:
+    """Execute a collapse function on a set of documents and merge their metadatas.
+
+    Args:
+        docs: A list of Documents to combine.
+        combine_document_func: A function that takes in a list of Documents and
+            optionally addition keyword parameters and combines them into a single
+            string.
+        **kwargs: Arbitrary additional keyword params to pass to the
+            combine_document_func.
+
+    Returns:
+        A single Document with the output of combine_document_func for the page content
+            and the combined metadata's of all the input documents. All metadata values
+            are strings, and where there are overlapping keys across documents the
+            values are joined by ", ".
+    """
+    result = combine_document_func(docs, **kwargs)
+    combined_metadata = {k: str(v) for k, v in docs[0].metadata.items()}
+    for doc in docs[1:]:
+        for k, v in doc.metadata.items():
+            if k in combined_metadata:
+                combined_metadata[k] += f", {v}"
+            else:
+                combined_metadata[k] = str(v)
+    return Document(page_content=result, metadata=combined_metadata)
+
+
+# from langchain.chains.combine_documents.reduce.py
+# class import was memory intensive so we use directly
+def split_list_of_docs(
+    docs: list[Document], length_func: Callable, token_max: int, **kwargs: Any
+) -> list[list[Document]]:
+    """Split Documents into subsets that each meet a cumulative length constraint.
+
+    Args:
+        docs: The full list of Documents.
+        length_func: Function for computing the cumulative length of a set of Documents.
+        token_max: The maximum cumulative length of any subset of Documents.
+        **kwargs: Arbitrary additional keyword params to pass to each call of the
+            length_func.
+
+    Returns:
+        A List[List[Document]].
+    """
+    new_result_doc_list = []
+    _sub_result_docs = []
+    for doc in docs:
+        _sub_result_docs.append(doc)
+        _num_tokens = length_func(_sub_result_docs, **kwargs)
+        if _num_tokens > token_max:
+            if len(_sub_result_docs) == 1:
+                raise ValueError(
+                    "A single document was longer than the context length,"
+                    " we cannot handle this."
+                )
+            new_result_doc_list.append(_sub_result_docs[:-1])
+            _sub_result_docs = _sub_result_docs[-1:]
+    new_result_doc_list.append(_sub_result_docs)
+    return new_result_doc_list
+
+
 # chunk and load
-def split_large_docs(
+async def split_large_docs(
+    docs: list[Document],
+    len_finder_fn: Callable[..., int],
+    max_doc_size: int, # in tokens
+    split_on_value: str = "\n\n",
+    chars_per_token_est: float = 3.5,
+) -> list[Document]:
+    # if doc is larger than max_chunk_size, split on nearest separator that yields max_chunk_size, maintaining metadata"
+    max_doc_size_chars = (max_doc_size * chars_per_token_est) // 1
+    docs_list = []
+    for doc in docs:
+        if len(doc.page_content) > max_doc_size_chars:
+            _doc_chunks = doc.page_content.split(sep=split_on_value)
+            _doc_under_construction: list[str] = []
+            _doc_under_construction_size = 0
+            _metadata = doc.metadata.copy()
+            _page = 1
+            _finalized_docs: list[Document] = []
+
+            # split long doc on newlines, and construct several docs of max_size from those chunks
+            for chunk in _doc_chunks:
+                _chunk_size = len(chunk)
+
+                # TODO: Add addl chunker for strings without enough split_on_value separators to allow them to meet min size requirement
+                if _chunk_size > max_doc_size_chars:
+                    raise ValueError(
+                        f"Minimum chunk size {_chunk_size} is larger than max doc size"
+                        f" {max_doc_size}. We split docs that are too long, but this"
+                        " failed. Maybe the separator doesn't exist in the doc? Try"
+                        " changing the split_on_value."
+                    )
+
+                if _doc_under_construction_size + _chunk_size >= max_doc_size_chars:
+                    _metadata["page"] = _page
+                    _finalized_docs.append(
+                        Document(
+                            page_content="".join(_doc_under_construction),
+                            metadata=_metadata.copy(),
+                        )
+                    )
+                    _doc_under_construction = []
+                    _doc_under_construction_size = 0
+                    _page += 1
+
+                _doc_under_construction.append(chunk)  # add chunk
+                _doc_under_construction_size += _chunk_size
+
+            # construct doc from remaining chunks
+            if _doc_under_construction:
+                _metadata["page"] = _page
+                _finalized_docs.append(
+                    Document(
+                        page_content="".join(_doc_under_construction),
+                        metadata=_metadata.copy(),
+                    )
+                )
+
+            _page = 0
+
+            # add finalized docs to list of docs
+            docs_list.extend(_finalized_docs)
+
+        else:
+            docs_list.append(doc)
+
+    token_normalized_docs_list = await token_split_docs(docs_list, len_finder_fn, max_doc_size, split_on_value)
+
+    return token_normalized_docs_list
+
+
+# chunk based on text, check via tiktoken
+async def token_split_docs(
     docs: list[Document],
     len_finder_fn: Callable[..., int],
     max_doc_size: int,
@@ -101,6 +248,7 @@ def split_large_docs(
             for chunk in _doc_chunks:
                 _chunk_size = len_finder_fn(chunk)
 
+                # TODO: Add addl chunker for strings without enough split_on_value separators to allow them to meet min size requirement
                 if _chunk_size > max_doc_size:
                     raise ValueError(
                         f"Minimum chunk size {_chunk_size} is larger than max doc size"
@@ -457,7 +605,7 @@ async def transform_raw_docs(
         raise TypeError("Expected a list of a single type as input")
 
     docs = sources_to_docs(parsed_input_files)
-    sized_docs = split_large_docs(docs, count_tokens, max_tokens_per_doc)
+    sized_docs = await split_large_docs(docs, count_tokens, max_tokens_per_doc)
 
     consolidated_lists = split_list_of_docs(
         sized_docs, count_tokens, max_tokens_per_doc, **kwargs

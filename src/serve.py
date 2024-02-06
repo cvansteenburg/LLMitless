@@ -23,7 +23,6 @@ from src.utils.client_auth import check_basic_auth
 from src.utils.logging_init import init_logging
 
 sentry_sdk.init(
-
     dsn="https://e6e80ca172e765ec75ad49a1137e2529@o4506601226764288.ingest.sentry.io/4506601237839872",
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
