@@ -295,6 +295,9 @@ async def summarize(
             )
 
             usage_report = cb
+
+            debug_info = None
+
             if MEMCHECK:
                 current, peak = tracemalloc.get_traced_memory()
                 debug_info = {"current_memory": current, "peak_memory": peak}
@@ -370,6 +373,8 @@ async def summarize_from_disk(
                 collapse_token_max=summarize_map_reduce.collapse_token_max,
             )
             usage_report = cb
+
+            debug_info = None
 
             if MEMCHECK:
                 current, peak = tracemalloc.get_traced_memory()
