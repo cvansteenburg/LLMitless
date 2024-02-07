@@ -85,6 +85,15 @@ logger = init_logging(CONFIG_FILE)
 
 CheckBasicAuth = Annotated[bool, Depends(check_basic_auth)]
 
+LLMApiKey = Annotated[
+    str,
+    Header(
+        ...,
+        title="API key",
+        description="API key for the LLM. Default LLM is OpenAI",
+    ),
+]
+
 
 class ResultStatus(StrEnum):
     SUCCESS = "SUCCESS"
@@ -223,14 +232,7 @@ async def root():
     response_model_exclude_none=True,
 )
 async def summarize(
-    api_key: Annotated[
-        str,
-        Header(
-            ...,
-            title="API key",
-            description="API key for the LLM. Default LLM is OpenAI",
-        ),
-    ],
+    api_key: LLMApiKey,
     input_doc_format: InputDocFormat,
     docs_to_summarize: list[DocumentContents],
     preprocessor: PreprocessorConfig,
@@ -266,14 +268,7 @@ async def summarize(
     response_model_exclude_none=True,
 )
 async def summarize_from_disk(
-    api_key: Annotated[
-        str,
-        Header(
-            ...,
-            title="API key",
-            description="API key for the LLM. Default LLM is OpenAI",
-        ),
-    ],
+    api_key: LLMApiKey,
     file_filter: FileFilter,
     preprocessor_config: PreprocessorConfig,
     summarize_map_reduce: MapReduceConfigs,

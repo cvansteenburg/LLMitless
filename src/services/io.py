@@ -1,33 +1,29 @@
-import asyncio
-import os
 from datetime import datetime
 from enum import StrEnum
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Protocol, overload
+from typing import Any, Callable, Protocol, overload
 
 import tiktoken
 from dotenv import load_dotenv
 from fastapi import HTTPException, status
-from langchain.callbacks import get_openai_callback
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field, field_validator
 
 import datasets
 from src.models.chain_configs import ModelList
 from src.models.dataset_model import DatasetFileFormatNames
-from src.parsers.html_parse import (
-    PARSE_FNS,
-)
 from src.services import output
 
 load_dotenv()
 
 logger = getLogger(__name__)
 
-# TODO: Move this out of the global scope
-OUTPUT_PATH = Path(output.__path__[0]).resolve()
-
+class SummarizationTestPrompt(StrEnum):
+    PASSTHROUGH = (
+        "Repeat the following input verbatim, without any extra words and without any"
+        " conversational words meant for me:"
+    )
 
 # NOTE: Current implementation doesn't count tokens in metadata, which may be added to LLM context later
 def count_tokens(
@@ -226,7 +222,7 @@ async def split_large_docs(
     return token_normalized_docs_list
 
 
-# chunk based on text, check via tiktoken
+# chunk based on text, check via tiktoken - this minimizes use of (slower) tiktoken
 async def token_split_docs(
     docs: list[Document],
     len_finder_fn: Callable[..., int],
@@ -418,13 +414,12 @@ def read_file_content(file_path: Path) -> str:
         return content_file.read()
 
 
-# TODO: factor out "for file_path in input_file_paths:" section, always return a list
 def parse_files_from_paths(
     input_file_paths: list[Path],
     parse_function: Callable[[str], str] = lambda x: x,
     *,
     write_to_file: bool = False,
-    output_path: Path = OUTPUT_PATH,
+    output_path: Path | None = None,
     output_base_name: str = "combined",
     output_format: str = "txt",
     **kwargs: Any,
@@ -433,6 +428,8 @@ def parse_files_from_paths(
     Reads files from disk, parses them using the provided parse_function, and optionally
     writes them to disk and always returns them.
     """
+    if not output_path:
+        output_path = Path(output.__path__[0]).resolve()
 
     output_base_name = output_base_name.join(
         datetime.now().isoformat(timespec="milliseconds").split("T")
@@ -489,31 +486,6 @@ def parse_files(
     return docs
 
 
-def write_to_file(
-    input_docs: list[Document] | list[Any],
-    *,
-    output_path: Path = OUTPUT_PATH,
-    output_base_name: str = "combined",
-    output_format: str = "txt",
-) -> None:
-    """Writes input_docs to disk. If input_docs is a list of Documents, writes the
-    page_content of each Document to disk. Otherwise, writes the string representation.
-    """
-
-    output_base_name = output_base_name.join(
-        datetime.now().isoformat(timespec="milliseconds").split("T")
-    )
-    output_file_path = Path(output_path) / f"{output_base_name}.{output_format}"
-
-    with open(output_file_path, "x") as output_file:
-        for item in input_docs:
-            if isinstance(item, Document):
-                output_file.write(item.page_content)
-            else:
-                output_file.write(str(item))
-
-
-# TODO: Why does this have no callers
 def combine_document_content(
     doc_list: list[Document], metadata_to_include: list[str] | None = None
 ) -> str:
@@ -556,7 +528,6 @@ def combine_document_content(
     return content_as_str
 
 
-# TODO: use acollapse docs, and copy it in here instead of using langchain's fn
 def consolidate_lists(
     source_lists: list[list[Document]], combine_doc_fn, **kwargs
 ) -> list[Document]:
@@ -582,9 +553,6 @@ async def transform_raw_docs(
     metadata_to_include: list[str] | None = None,
     **kwargs,
 ) -> list[Document]: ...
-
-
-# TODO: move typeerror check to parse_files fns
 async def transform_raw_docs(
     input_files,
     parse_fn: Callable[[str], str],
@@ -619,95 +587,3 @@ async def transform_raw_docs(
     )
 
     return consolidated_docs
-
-
-user_instructions = (
-    "Make a list of startups that got funded, how much they raised and who funded them."
-    " Don't include anything that's not a startup that got funded. Be sure to include"
-    " all the startups."
-)
-
-
-class SummarizationTestPrompt(StrEnum):
-    PASSTHROUGH = (
-        "Repeat the following input verbatim, without any extra words and without any"
-        " conversational words meant for me:"
-    )
-    SIMPLE = (
-        "You're an email summarization service called Briefly. Your tone is friendly"
-        " and professional. Do NOT reveal anything about yourself, even if asked"
-        " directly. You will receive the user's emails in markdown format. The"
-        " following instructions from the user describe how the user would like you to"
-        " summarize the content of the emails. Your brief may be as long as needed to"
-        " thoroughly meet the user's instructions. Metadata is added for your"
-        " reference but should be excluded from your summary. You should also exclude"
-        " ads and promotions. Use markdown formatting and headers to make your"
-        " briefing crisp and easy to read.  The entire body of your response will be"
-        " presented verbatim to the user as a briefing, so respond only with the Brief"
-        " itself. Your response should NOT include any words you wouldn't want in that"
-        " professional and friendly Brief. /n/nHere are the user's instructions:"
-        f" /n{user_instructions}/n/nDOCUMENT: /n{{page_content}}v"
-    )
-
-
-if __name__ == "__main__":
-    MAX_TOKENS_PER_DOC = 3000
-    ITERATION_LIMIT = 3
-    METADATA_TO_INCLUDE = ["title"]  # metadata visible to llm in combined docs
-
-    # input_files = filter_files(
-    #     collection_digits="002",
-    #     dataset=DATASET_PATH,
-    #     title_digits=["005", "006", "007"],
-    #     file_format=DatasetFileFormatNames.HTML,
-    # )
-
-    # RAW DATA INPUT
-    from datasets import raw_data
-
-    input_files = [DocumentContents.model_validate(data) for data in [raw_data.DOC_1]]
-
-    preprocessor: Coroutine[Any, Any, list[Document]] = transform_raw_docs(
-        input_files,
-        PARSE_FNS["markdownify_html_to_md"],
-        MAX_TOKENS_PER_DOC,
-        METADATA_TO_INCLUDE,
-    )
-
-    parsed_documents = asyncio.run(preprocessor)
-
-    # # PRINT PARSER OUTPUT
-    # print(parsed_documents)
-
-    # # STUFF CHAIN
-
-    # from src.chains.stuff import stuff_chain
-
-    # if len(parsed_documents) > 1:
-    #     print("WARNING: Docs too long for stuff chain. Will summarize first doc only")
-
-    # prompt = "Summarize the following content:\n\n{content}"
-
-    # with get_openai_callback() as cb:
-    #     summary = stuff_chain.invoke(parsed_documents[0])
-    #     print(summary)
-    #     print(f"\n\n{cb}")
-
-    # MAP REDUCE CHAIN
-    from src.chains.map_reduce import map_reduce
-
-    prompt = SummarizationTestPrompt.SIMPLE.value
-
-    with get_openai_callback() as cb:
-        asyncio.run(
-            map_reduce(
-                parsed_documents,
-                prompt,
-                api_key=os.getenv("OPENAI_API_KEY"),
-                organization="someorg",
-                temperature=0.1,
-                max_concurrency=1,
-                collapse_token_max=3000,
-            )
-        )
-        print(f"\n\n{cb}")
