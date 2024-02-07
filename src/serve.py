@@ -24,7 +24,7 @@ from src.models.dataset_model import (
     input_format_from_dataset_file_format,
     sum_parser_selector,
 )
-from src.services.io import (
+from src.services.doc_operations import (
     DocumentContents,
     SummarizationTestPrompt,
     transform_raw_docs,

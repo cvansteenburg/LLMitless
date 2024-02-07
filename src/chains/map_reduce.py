@@ -16,7 +16,7 @@ from langchain.schema.runnable import (
 )
 from langchain_core.runnables import ConfigurableField
 
-from src.services.io import collapse_docs, count_tokens, split_list_of_docs
+from src.services.doc_operations import collapse_docs, count_tokens, split_list_of_docs
 from src.utils.callbacks import GetFinishReason
 
 load_dotenv()

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 
 import datasets
 from src.services import output
-from src.services.io import DocumentContents
+from src.services.doc_operations import DocumentContents
 
 logger = getLogger(__name__)
 
