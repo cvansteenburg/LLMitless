@@ -173,9 +173,8 @@ dump.rdb
 wandb/
 
 # Other
-services/output
 datasets
-src/services/output
+output_collection
 .parking_lot.py
 .todo.txt
 temp/

@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 
 import datasets
-from src.services import output
+import output_collection
 from src.services.doc_operations import DocumentContents
 
 logger = getLogger(__name__)
@@ -165,7 +165,7 @@ def parse_files_from_paths(
     writes them to disk and always returns them.
     """
     if not output_path:
-        output_path = Path(output.__path__[0]).resolve()
+        output_path = Path(output_collection.__path__[0]).resolve()
 
     output_base_name = output_base_name.join(
         datetime.now().isoformat(timespec="milliseconds").split("T")

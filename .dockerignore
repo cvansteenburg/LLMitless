@@ -5,6 +5,7 @@ datasets_sample
 logs
 temp
 wandb
+output
 .gitignore
 .todo.txt
 .github
