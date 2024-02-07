@@ -2,7 +2,6 @@ from functools import partial
 from string import Formatter
 from typing import Any
 
-from dotenv import load_dotenv
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chat_models import ChatOpenAI  # noqa: F401
 from langchain.prompts import PromptTemplate
@@ -18,8 +17,6 @@ from langchain_core.runnables import ConfigurableField
 
 from src.services.doc_operations import collapse_docs, count_tokens, split_list_of_docs
 from src.utils.callbacks import GetFinishReason
-
-load_dotenv()
 
 # UNCOMMENT FOR FAKE LLM
 # from langchain.chat_models import FakeListChatModel  # noqa: E402
