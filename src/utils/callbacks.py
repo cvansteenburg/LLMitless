@@ -13,7 +13,8 @@ finish_reason_callback_var: ContextVar[GetFinishReason | None] = ContextVar(
 
 class GetFinishReason(BaseCallbackHandler):
     """
-    A callback handler that collects 'finish_reason' from each generation in a response.
+    A callback handler that collects 'finish_reason' from each generation in an
+    OpenAI chat completion response.
     
     This handler is designed to be used as a callback at the end of an LLM operation to
     aggregate the reasons why the LLM operation was concluded.
@@ -53,7 +54,7 @@ def get_finish_reason_callback() -> Generator[GetFinishReason, None, None]:
     A context manager to instantiate and manage the lifecycle of a GetFinishReason object.
 
     It sets a GetFinishReason instance as the current context for collecting 'finish_reason'
-    values during an LLM operation and ensures the context is cleared after use.
+    values during an OpenAI chat completion operation and ensures the context is cleared after use.
 
     Yields:
         An instance of GetFinishReason to accumulate 'finish_reason' within a given context.
