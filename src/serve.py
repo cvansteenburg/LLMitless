@@ -62,10 +62,11 @@ load_dotenv(env_file)
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     if MEMCHECK:
-        tracemalloc.start() 
+        tracemalloc.start()
     yield
     if MEMCHECK:
         tracemalloc.stop()
+
 
 app = FastAPI(
     title="llmitless",
@@ -101,7 +102,7 @@ class SummarizationResult(BaseModel):
     class Config:
         exclude_none = True
 
-# overload summarize_sources so it can take a doc_to_summarize of type list[DocumentContents] in one overload or a list[Path] in the other. The other parameters are the same in both overloads
+
 @overload
 async def _summarize_sources(
     api_key: str,
@@ -110,8 +111,7 @@ async def _summarize_sources(
     preprocessor_config: PreprocessorConfig,
     summarize_map_reduce: MapReduceConfigs,
     llm_config: LLMConfigs,
-) -> SummarizationResult:
-    ...
+) -> SummarizationResult: ...
 @overload
 async def _summarize_sources(
     api_key: str,
@@ -120,8 +120,7 @@ async def _summarize_sources(
     preprocessor_config: PreprocessorConfig,
     summarize_map_reduce: MapReduceConfigs,
     llm_config: LLMConfigs,
-) -> SummarizationResult:
-    ...
+) -> SummarizationResult: ...
 async def _summarize_sources(
     api_key: str,
     docs_to_summarize,
@@ -130,7 +129,7 @@ async def _summarize_sources(
     summarize_map_reduce: MapReduceConfigs,
     llm_config: LLMConfigs,
 ) -> SummarizationResult:
-    
+
     try:
         parsed_documents = await transform_raw_docs(
             docs_to_summarize,
@@ -199,7 +198,7 @@ async def _summarize_sources(
                     usage_report=repr(usage_report),
                     debug=debug_info,
                 )
-    
+
     except Exception as e:
         logger.error(e)
         raise HTTPException(
@@ -220,7 +219,8 @@ async def root():
 @app.post(
     "/summarize/{input_doc_format}",
     summary="Summarize a list of documents",
-    operation_id="summarize", response_model_exclude_none=True,
+    operation_id="summarize",
+    response_model_exclude_none=True,
 )
 async def summarize(
     api_key: Annotated[
@@ -260,7 +260,11 @@ async def summarize(
     )
 
 
-@app.post("/summarize_from_disk", operation_id="summarize_from_disk", response_model_exclude_none=True)
+@app.post(
+    "/summarize_from_disk",
+    operation_id="summarize_from_disk",
+    response_model_exclude_none=True,
+)
 async def summarize_from_disk(
     api_key: Annotated[
         str,
@@ -284,15 +288,12 @@ async def summarize_from_disk(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
         )
-    
+
     input_doc_format = input_format_from_dataset_file_format(file_filter.file_format)
-    
+
     parser = await sum_parser_selector(input_doc_format)
 
     docs_to_summarize = filter_files(file_filter)
-    
-        # TODO: Add callback manager and error handling here. Maybe call out HTTP errors that merit a retry from the client side. Get rid of JSON format in sample data and adjust tests.
-        # TODO: Finish classes and handling in Briefly. Regenerate LLMitless client.
 
     return await _summarize_sources(
         api_key,
@@ -302,6 +303,7 @@ async def summarize_from_disk(
         summarize_map_reduce,
         llm_config,
     )
+
 
 if __name__ == "__main__":
     import uvicorn
