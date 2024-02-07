@@ -4,7 +4,7 @@ from typing import Callable
 from fastapi import HTTPException, status
 
 from src.parsers.html_parse import PARSE_FNS
-from src.utils.file_ops import DatasetFileFormatNames
+from src.utils.file_operations import DatasetFileFormatNames
 
 
 class InputDocFormat(StrEnum):

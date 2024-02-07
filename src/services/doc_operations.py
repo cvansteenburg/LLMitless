@@ -384,7 +384,7 @@ async def transform_raw_docs(
 ) -> list[Document]:
     try:
         if isinstance(input_files[0], Path):
-            from src.utils.file_ops import parse_files_from_paths
+            from src.utils.file_operations import parse_files_from_paths
             parsed_input_files = parse_files_from_paths(input_files, parse_fn, **kwargs)
         else:
             parsed_input_files = parse_files(input_files, parse_fn, **kwargs)

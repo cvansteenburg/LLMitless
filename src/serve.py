@@ -31,7 +31,7 @@ from src.services.doc_operations import (
 )
 from src.utils.callbacks import get_finish_reason_callback
 from src.utils.client_auth import check_basic_auth
-from src.utils.file_ops import FileFilter, filter_files
+from src.utils.file_operations import FileFilter, filter_files
 from src.utils.logging_init import init_logging
 
 sentry_sdk.init(
