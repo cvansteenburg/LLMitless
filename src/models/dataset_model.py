@@ -4,18 +4,13 @@ from typing import Callable
 from fastapi import HTTPException, status
 
 from src.parsers.html_parse import PARSE_FNS
+from src.utils.file_ops import DatasetFileFormatNames
 
 
 class InputDocFormat(StrEnum):
     HTML = "html"
     MARKDOWN = "markdown"
     TEXT = "text"
-
-
-class DatasetFileFormatNames(StrEnum):
-    HTML = "html-message.html"
-    RAW = "raw-source.txt"
-    TXT = "text-message.txt"
 
 
 async def sum_parser_selector(input_doc_format: InputDocFormat) -> Callable[[str], str]:
