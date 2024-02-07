@@ -12,7 +12,11 @@ from langchain.callbacks import get_openai_callback
 from pydantic import BaseModel, Field
 
 from src.chains.map_reduce import map_reduce
-from src.parsers.html_parse import PARSE_FNS
+from src.models.dataset_model import (
+    InputDocFormat,
+    input_format_from_dataset_file_format,
+    sum_parser_selector,
+)
 from src.services.io import (
     DocumentContents,
     FileFilter,
@@ -202,27 +206,6 @@ class LLMConfigs(BaseModel):
     )
 
 
-class InputDocFormat(StrEnum):
-    HTML = "html"
-    MARKDOWN = "markdown"
-    TEXT = "text"
-
-
-async def sum_parser_selector(input_doc_format: InputDocFormat):
-    match input_doc_format:
-        case InputDocFormat.HTML:
-            return PARSE_FNS["markdownify_html_to_md"]
-        case InputDocFormat.MARKDOWN:
-            return PARSE_FNS["passthrough"]
-        case InputDocFormat.TEXT:
-            return PARSE_FNS["passthrough"]
-        case _:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid input_doc_format",
-            )
-
-
 class ResultStatus(StrEnum):
     SUCCESS = "SUCCESS"
     FORBIDDEN_CONTENT = "FORBIDDEN_CONTENT"
@@ -393,13 +376,17 @@ async def summarize_from_disk(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Pass an API key for the summarization LLM. OpenAI is default",
         )
+    
+    input_doc_format = input_format_from_dataset_file_format(file_filter.file_format)
+    
+    parser = await sum_parser_selector(input_doc_format)
 
     try:
         input_files = filter_files(file_filter)
 
         preprocessor = transform_raw_docs(
             input_files,
-            PARSE_FNS["markdownify_html_to_md"],
+            parser,
             preprocessor_config.max_tokens_per_doc,
             preprocessor_config.metadata_to_include,
         )
@@ -409,6 +396,8 @@ async def summarize_from_disk(
         if summarize_map_reduce.core_prompt is None:
             prompt = SummarizationTestPrompt.SIMPLE.value
 
+        # TODO: Add callback manager and error handling here. Maybe call out HTTP errors that merit a retry from the client side. Get rid of JSON format in sample data and adjust tests.
+        # TODO: Finish classes and handling in Briefly. Regenerate LLMitless client.
         with get_openai_callback() as cb:
             summary = await map_reduce(
                 parsed_documents,
