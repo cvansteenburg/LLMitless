@@ -19,11 +19,13 @@ load_dotenv()
 
 logger = getLogger(__name__)
 
+
 class SummarizationTestPrompt(StrEnum):
     PASSTHROUGH = (
         "Repeat the following input verbatim, without any extra words and without any"
         " conversational words meant for me:"
     )
+
 
 # NOTE: Current implementation doesn't count tokens in metadata, which may be added to LLM context later
 def count_tokens(
@@ -82,6 +84,7 @@ class CombineDocsProtocol(Protocol):
 
     def __call__(self, docs: list[Document], **kwargs: Any) -> str:
         """Interface for the combine_docs method."""
+
 
 # from langchain.chains.combine_documents.reduce.py
 # class import was memory intensive so we use directly
@@ -155,7 +158,7 @@ def split_list_of_docs(
 async def split_large_docs(
     docs: list[Document],
     len_finder_fn: Callable[..., int],
-    max_doc_size: int, # in tokens
+    max_doc_size: int,  # in tokens
     split_on_value: str = "\n\n",
     chars_per_token_est: float = 3.5,
 ) -> list[Document]:
@@ -217,7 +220,9 @@ async def split_large_docs(
         else:
             docs_list.append(doc)
 
-    token_normalized_docs_list = await token_split_docs(docs_list, len_finder_fn, max_doc_size, split_on_value)
+    token_normalized_docs_list = await token_split_docs(
+        docs_list, len_finder_fn, max_doc_size, split_on_value
+    )
 
     return token_normalized_docs_list
 
@@ -296,7 +301,7 @@ class FileFilter(BaseModel):
         description='Usually a 3 digit number expressed as a string eg. "010"',
     )
     title_digits: list[str] | None = Field(
-        default= None,
+        default=None,
         title="Title digits",
         description=(
             'A list of usually 3 digit numbers expressed as a strings eg. ["001",'
@@ -305,11 +310,13 @@ class FileFilter(BaseModel):
     )
     file_format: DatasetFileFormatNames = DatasetFileFormatNames.HTML
 
-    @field_validator ("collection_digits")
+    @field_validator("collection_digits")
     @classmethod
     def validate_collection_digits(cls, v: str):
         if v and not v.isdigit() or not 0 <= int(v) <= 99999:
-            raise ValueError("collection_digits must be a string representing an integer between 0 and 99999")
+            raise ValueError(
+                "collection_digits must be a string representing an integer between 0 and 99999"
+            )
         return v
 
     @field_validator("title_digits")
@@ -319,7 +326,9 @@ class FileFilter(BaseModel):
         if v is not None:
             for i in v:
                 if not i.isdigit() or not 0 <= int(i) <= 99999:
-                    raise ValueError("Each int in title_digits must be a string representing an integer between 0 and 99999")
+                    raise ValueError(
+                        "Each int in title_digits must be a string representing an integer between 0 and 99999"
+                    )
         return v
 
 
@@ -354,6 +363,7 @@ def filter_files(filter_inputs: FileFilter, test_root: bool = False) -> list[Pat
         if test_root:
             # TODO: make this an env var
             from tests import dataset_for_testing as test_data
+
             # path to tests/dataset_for_testing
             dataset_root = Path(test_data.__path__[0]).resolve()
         else:
@@ -393,7 +403,7 @@ def filter_files(filter_inputs: FileFilter, test_root: bool = False) -> list[Pat
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Could not find any title directories matching {digits} in collection {_col_digits} in dataset {dataset_root}",
             )
-        
+
         for dir in target_dirs:
             filtered_files.extend(dir.glob(_file_format))
 
