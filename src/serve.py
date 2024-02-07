@@ -101,7 +101,6 @@ class SummarizationResult(BaseModel):
         exclude_none = True
 
 
-# Make sure we're live
 @app.get("/")
 async def root():
     logger.info("Hello World")
@@ -152,11 +151,8 @@ async def summarize(
             preprocessor.metadata_to_include,
         )
 
-        prompt = (
-            summarize_map_reduce.core_prompt
-            if summarize_map_reduce.core_prompt
-            else SummarizationTestPrompt.SIMPLE.value
-        )
+        if summarize_map_reduce.core_prompt is None:
+            prompt = SummarizationTestPrompt.SIMPLE.value
 
         with get_openai_callback() as cb:
             with get_finish_reason_callback() as finish_reason:
@@ -253,17 +249,16 @@ async def summarize_from_disk(
     
     parser = await sum_parser_selector(input_doc_format)
 
+    input_files = filter_files(file_filter)
+    
     try:
-        input_files = filter_files(file_filter)
 
-        preprocessor = transform_raw_docs(
+        parsed_documents = await transform_raw_docs(
             input_files,
             parser,
             preprocessor_config.max_tokens_per_doc,
             preprocessor_config.metadata_to_include,
         )
-
-        parsed_documents = await preprocessor
 
         if summarize_map_reduce.core_prompt is None:
             prompt = SummarizationTestPrompt.SIMPLE.value
@@ -271,34 +266,62 @@ async def summarize_from_disk(
         # TODO: Add callback manager and error handling here. Maybe call out HTTP errors that merit a retry from the client side. Get rid of JSON format in sample data and adjust tests.
         # TODO: Finish classes and handling in Briefly. Regenerate LLMitless client.
         with get_openai_callback() as cb:
-            summary = await map_reduce(
-                parsed_documents,
-                prompt,
-                summarize_map_reduce.collapse_prompt,
-                summarize_map_reduce.combine_prompt,
-                api_key=api_key,
-                organization=llm_config.organization,
-                max_tokens=llm_config.max_tokens,
-                model=llm_config.model,
-                temperature=llm_config.temperature,
-                max_concurrency=summarize_map_reduce.max_concurrency,
-                iteration_limit=summarize_map_reduce.iteration_limit,
-                collapse_token_max=summarize_map_reduce.collapse_token_max,
-            )
-            usage_report = cb
+            with get_finish_reason_callback() as finish_reason:
 
-            debug_info = None
+                try:
+                    summary = await map_reduce(
+                        parsed_documents,
+                        prompt,
+                        summarize_map_reduce.collapse_prompt,
+                        summarize_map_reduce.combine_prompt,
+                        api_key=api_key,
+                        organization=llm_config.organization,
+                        max_tokens=llm_config.max_tokens,
+                        model=llm_config.model,
+                        temperature=llm_config.temperature,
+                        max_concurrency=summarize_map_reduce.max_concurrency,
+                        iteration_limit=summarize_map_reduce.iteration_limit,
+                        collapse_token_max=summarize_map_reduce.collapse_token_max,
+                    )
+                except httpx.HTTPError as http_err:
+                    # Handle HTTP errors from any LLM provider
+                    logger.error(f"HTTP error occurred: {http_err}")
+                    return SummarizationResult(
+                        result_status=ResultStatus.SERVER_ERROR,
+                        summary=None,
+                        usage_report=None,
+                        debug=None,
+                    )
+                except Exception as general_err:
+                    # Catch-all for other unexpected errors
+                    logger.error(f"An unexpected error occurred: {general_err}")
+                    return SummarizationResult(
+                        result_status=ResultStatus.SERVER_ERROR,
+                        summary=None,
+                        usage_report=None,
+                        debug=None,
+                    )
 
-            if MEMCHECK:
-                current, peak = tracemalloc.get_traced_memory()
-                debug_info = {"current_memory": current, "peak_memory": peak}
+                result_status = ResultStatus.SUCCESS
+                usage_report = cb
+                finish_reasons = finish_reason.finish_reasons
 
-        return SummarizationResult(
-            result_status=ResultStatus.SUCCESS,
-            summary=summary,
-            usage_report=repr(usage_report),
-            debug=debug_info,
-        )
+                if OpenAIFinishReason.CONTENT_FILTER.value in finish_reasons:
+                    result_status = ResultStatus.FORBIDDEN_CONTENT
+                elif OpenAIFinishReason.LENGTH.value in finish_reasons:
+                    logger.warning("Summarization length limit reached.")
+
+                debug_info = None
+                if MEMCHECK:
+                    current, peak = tracemalloc.get_traced_memory()
+                    debug_info = {"current_memory": current, "peak_memory": peak}
+
+                return SummarizationResult(
+                    result_status=result_status,
+                    summary=summary,
+                    usage_report=repr(usage_report),
+                    debug=debug_info,
+                )
 
     except Exception as e:
         logger.error(e)
