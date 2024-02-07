@@ -17,6 +17,7 @@ from langchain.schema.runnable import (
 from langchain_core.runnables import ConfigurableField
 
 from src.services.io import collapse_docs, count_tokens, split_list_of_docs
+from src.utils.callbacks import GetFinishReason
 
 load_dotenv()
 
@@ -39,7 +40,7 @@ load_dotenv()
 # llm = ChatOpenAI(callbacks=[temp_reporter]).configurable_fields(
 
 # # UNCOMMENT FOR LIVE OPENAI LLM
-llm = ChatOpenAI().configurable_fields(
+llm = ChatOpenAI(callbacks=[GetFinishReason()]).configurable_fields(
     openai_api_key=ConfigurableField(
         id="api_key",
         name="OpenAI API Key",

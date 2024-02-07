@@ -1,9 +1,10 @@
 import os
 import tracemalloc
 from contextlib import asynccontextmanager
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Annotated
 
+import httpx
 import sentry_sdk
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -19,6 +20,7 @@ from src.services.io import (
     filter_files,
     transform_raw_docs,
 )
+from src.utils.callbacks import get_finish_reason_callback
 from src.utils.client_auth import check_basic_auth
 from src.utils.logging_init import init_logging
 
@@ -221,10 +223,33 @@ async def sum_parser_selector(input_doc_format: InputDocFormat):
             )
 
 
+class ResultStatus(StrEnum):
+    SUCCESS = "SUCCESS"
+    FORBIDDEN_CONTENT = "FORBIDDEN_CONTENT"
+    UNCLEAR_INSTRUCTIONS = "UNCLEAR_INSTRUCTIONS"
+    SERVER_ERROR = "MODEL_ERROR"
+
+
+class OpenAIFinishReason(StrEnum):
+    STOP = "stop"
+    LENGTH = "length"
+    CONTENT_FILTER = "content_filter"
+    TOOL_CALLS = "tool_calls"
+
+
+class OpenAIErrorCodes(Enum):
+    INVALID_AUTHENTICATION = 401
+    INCORRECT_API_KEY = 401
+    RATE_LIMIT_REACHED = 429
+    QUOTA_EXCEEDED = 429
+    SERVER_ERROR = 500
+    SERVER_OVERLOAD = 503
+
+
 class SummarizationResult(BaseModel):
-    status: str
-    summary: str
-    usage_report: str
+    result_status: ResultStatus
+    summary: str | None = None
+    usage_report: str | None = None
     debug: dict | None = None
 
     class Config:
@@ -279,35 +304,62 @@ async def summarize(
         )
 
         with get_openai_callback() as cb:
-            summary = await map_reduce(
-                parsed_documents,
-                prompt,
-                summarize_map_reduce.collapse_prompt,
-                summarize_map_reduce.combine_prompt,
-                api_key=api_key,
-                organization=llm_config.organization,
-                max_tokens=llm_config.max_tokens,
-                model=llm_config.model,
-                temperature=llm_config.temperature,
-                max_concurrency=summarize_map_reduce.max_concurrency,
-                iteration_limit=summarize_map_reduce.iteration_limit,
-                collapse_token_max=summarize_map_reduce.collapse_token_max,
-            )
+            with get_finish_reason_callback() as finish_reason:
 
-            usage_report = cb
+                try:
+                    summary = await map_reduce(
+                        parsed_documents,
+                        prompt,
+                        summarize_map_reduce.collapse_prompt,
+                        summarize_map_reduce.combine_prompt,
+                        api_key=api_key,
+                        organization=llm_config.organization,
+                        max_tokens=llm_config.max_tokens,
+                        model=llm_config.model,
+                        temperature=llm_config.temperature,
+                        max_concurrency=summarize_map_reduce.max_concurrency,
+                        iteration_limit=summarize_map_reduce.iteration_limit,
+                        collapse_token_max=summarize_map_reduce.collapse_token_max,
+                    )
+                except httpx.HTTPError as http_err:
+                    # Handle HTTP errors from any LLM provider
+                    logger.error(f"HTTP error occurred: {http_err}")
+                    return SummarizationResult(
+                        result_status=ResultStatus.SERVER_ERROR,
+                        summary=None,
+                        usage_report=None,
+                        debug=None,
+                    )
+                except Exception as general_err:
+                    # Catch-all for other unexpected errors
+                    logger.error(f"An unexpected error occurred: {general_err}")
+                    return SummarizationResult(
+                        result_status=ResultStatus.SERVER_ERROR,
+                        summary=None,
+                        usage_report=None,
+                        debug=None,
+                    )
 
-            debug_info = None
+                result_status = ResultStatus.SUCCESS
+                usage_report = cb
+                finish_reasons = finish_reason.finish_reasons
 
-            if MEMCHECK:
-                current, peak = tracemalloc.get_traced_memory()
-                debug_info = {"current_memory": current, "peak_memory": peak}
+                if OpenAIFinishReason.CONTENT_FILTER.value in finish_reasons:
+                    result_status = ResultStatus.FORBIDDEN_CONTENT
+                elif OpenAIFinishReason.LENGTH.value in finish_reasons:
+                    logger.warning("Summarization length limit reached.")
 
-        return SummarizationResult(
-            status="success",
-            summary=summary,
-            usage_report=repr(usage_report),
-            debug=debug_info,
-        )
+                debug_info = None
+                if MEMCHECK:
+                    current, peak = tracemalloc.get_traced_memory()
+                    debug_info = {"current_memory": current, "peak_memory": peak}
+
+                return SummarizationResult(
+                    result_status=result_status,
+                    summary=summary,
+                    usage_report=repr(usage_report),
+                    debug=debug_info,
+                )
 
     except Exception as e:
         logger.error(e)
@@ -381,7 +433,7 @@ async def summarize_from_disk(
                 debug_info = {"current_memory": current, "peak_memory": peak}
 
         return SummarizationResult(
-            status="success",
+            result_status=ResultStatus.SUCCESS,
             summary=summary,
             usage_report=repr(usage_report),
             debug=debug_info,
