@@ -14,8 +14,8 @@ from langchain_core.documents import Document
 from pydantic import BaseModel, Field, field_validator
 
 import datasets
+from src.models.chain_configs import ModelList
 from src.models.dataset_model import DatasetFileFormatNames
-from src.models.language_models import ModelList
 from src.parsers.html_parse import (
     PARSE_FNS,
 )
