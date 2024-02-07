@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Callable
 
 from fastapi import HTTPException, status
 
@@ -17,7 +18,7 @@ class DatasetFileFormatNames(StrEnum):
     TXT = "text-message.txt"
 
 
-async def sum_parser_selector(input_doc_format: InputDocFormat):
+async def sum_parser_selector(input_doc_format: InputDocFormat) -> Callable[[str], str]:
     match input_doc_format:
         case InputDocFormat.HTML:
             return PARSE_FNS["markdownify_html_to_md"]
