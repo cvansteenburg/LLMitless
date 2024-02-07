@@ -148,7 +148,7 @@ async def _summarize_sources(
         )
 
         if summarize_map_reduce.core_prompt is None:
-            prompt = SummarizationTestPrompt.SIMPLE.value
+            prompt = SummarizationTestPrompt.PASSTHROUGH.value
 
         with get_openai_callback() as cb:
             with get_finish_reason_callback() as finish_reason:
