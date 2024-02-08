@@ -1,3 +1,4 @@
+import os
 import tracemalloc
 from enum import StrEnum
 from logging import getLogger
@@ -16,7 +17,6 @@ from src.models.chain_configs import (
     OpenAIFinishReason,
     PreprocessorConfig,
 )
-from src.serve import MEMCHECK
 from src.services.doc_operations import (
     DocumentContents,
     SummarizationTestPrompt,
@@ -25,6 +25,8 @@ from src.services.doc_operations import (
 from src.utils.callbacks import get_finish_reason_callback
 
 logger = getLogger(__name__)
+
+MEMCHECK = os.getenv("MEMCHECK", False)
 
 class ResultStatus(StrEnum):
     SUCCESS = "SUCCESS"

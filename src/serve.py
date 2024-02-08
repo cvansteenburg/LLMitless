@@ -32,7 +32,6 @@ sentry_sdk.init(
 )
 
 ENV_CONTEXT = os.getenv("ENV_CONTEXT", "production")
-MEMCHECK = os.getenv("MEMCHECK", False)
 
 env_file = (
     ".env.prod"
@@ -42,13 +41,13 @@ env_file = (
 
 load_dotenv(env_file)
 
-
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
-    if MEMCHECK:
+    memcheck_status = os.getenv("MEMCHECK", False)
+    if memcheck_status:
         tracemalloc.start()
     yield
-    if MEMCHECK:
+    if memcheck_status:
         tracemalloc.stop()
 
 
@@ -63,6 +62,7 @@ app = FastAPI(
 
 CONFIG_FILE = "pyproject.toml"
 logger = init_logging(CONFIG_FILE)
+
 
 # if ENV_CONTEXT != "development":
 #     app.add_middleware(HTTPSRedirectMiddleware)
@@ -82,9 +82,6 @@ LLMApiKey = Annotated[
 @app.get("/")
 async def root():
     logger.info("Hello World")
-    if MEMCHECK:
-        current, peak = tracemalloc.get_traced_memory()
-        return {"current_memory": current, "peak_memory": peak}
     return {"message": "Hello World"}
 
 
