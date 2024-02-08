@@ -25,12 +25,9 @@ from src.utils.logging_init import init_logging
 
 sentry_sdk.init(
     dsn="https://e6e80ca172e765ec75ad49a1137e2529@o4506601226764288.ingest.sentry.io/4506601237839872",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
+    # Set to 1.0 to capture 100% of transactions for performance monitoring.
     traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
+    # Set to 1.0 to profile 100% of sampled transactions
     profiles_sample_rate=1.0,
 )
 
