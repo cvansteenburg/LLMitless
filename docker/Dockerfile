@@ -111,6 +111,7 @@ WORKDIR ${PROJECT_ROOT}
 # Optional project-specific mkdir. This module is imported by code but populated by
 # user. Create an empty directory to avoid import errors.
 RUN mkdir datasets && touch datasets/__init__.py
+RUN mkdir output_collection && touch output_collection/__init__.py
 COPY pyproject.toml ./
 # Copy in the core application code
 COPY src ./src
@@ -143,6 +144,7 @@ WORKDIR ${PROJECT_ROOT}
 # Optional project-specific mkdir. (This module is imported by code but populated by
 # user. We create an empty directory to avoid import errors.)
 RUN mkdir datasets && touch datasets/__init__.py
+RUN mkdir output_collection && touch output_collection/__init__.py
 # Copy in core application code and tests
 COPY pyproject.toml ./
 COPY src ./src
@@ -194,6 +196,7 @@ WORKDIR ${PROJECT_ROOT}
 # Optional project-specific mkdir. This module is imported by code but populated by
 # user. Create an empty directory to avoid import errors.
 RUN mkdir datasets && touch datasets/__init__.py
+RUN mkdir output_collection && touch output_collection/__init__.py
 COPY pyproject.toml ./
 # Copy in the core application code
 COPY src ./src
