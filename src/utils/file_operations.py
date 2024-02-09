@@ -11,7 +11,7 @@ import datasets
 import output_collection
 from src.services.doc_operations import DocumentContents
 
-logger = getLogger(__name__)
+logger = getLogger(f"llmitless.{__name__}")
 
 
 class DatasetFileFormatNames(StrEnum):

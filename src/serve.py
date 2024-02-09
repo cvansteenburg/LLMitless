@@ -60,8 +60,7 @@ app = FastAPI(
     lifespan=app_lifespan,
 )
 
-CONFIG_FILE = "pyproject.toml"
-logger = init_logging(CONFIG_FILE)
+logger = init_logging("pyproject.toml")
 
 
 # if ENV_CONTEXT != "development":
@@ -81,7 +80,7 @@ LLMApiKey = Annotated[
 
 @app.get("/")
 async def root():
-    logger.info("Hello World")
+    logger.debug("Hello World")
     return {"message": "Hello World"}
 
 

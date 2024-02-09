@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-logger = getLogger(__name__)
+logger = getLogger(f"llmitless.{__name__}")
 
 basic_security = HTTPBasic()
 

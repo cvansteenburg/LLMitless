@@ -30,7 +30,6 @@ transformers = "^4.36.2"
 mypy = "^1.8.0"
 black = "^23.12.1"
 pretty = "^0.1"
-wandb = "^0.16.2"
 
 
 [tool.poetry.group.test.dependencies]
@@ -62,22 +61,22 @@ ignore_missing_imports = true
 module = "unstructured.*"
 ignore_missing_imports = true
 
-[tool.LLMitless.logging]
+[tool.llmitless.logging]
 version = 1
 
-[tool.LLMitless.logging.formatters.simple]
+[tool.llmitless.logging.formatters.simple]
 format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-[tool.LLMitless.logging.handlers.file_handler]
+[tool.llmitless.logging.handlers.file_handler]
 class = "logging.handlers.TimedRotatingFileHandler"
 level = "DEBUG"
 formatter = "simple"
-filename = "logs/LLMitless.log"
+filename = "logs/llmitless.log"
 when = "D"
 interval = 1
 backupCount = 7
 
-[tool.LLMitless.logging.loggers.LLMitless]
+[tool.llmitless.logging.loggers.llmitless]
 level = "DEBUG"
 handlers = ["file_handler"]
 propagate = true

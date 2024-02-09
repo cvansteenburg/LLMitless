@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from src.models.chain_configs import ModelList
 
-logger = getLogger(__name__)
+logger = getLogger(f"llmitless.{__name__}")
 
 
 class SummarizationTestPrompt(StrEnum):

@@ -1,6 +1,6 @@
 import logging.config
-from pathlib import Path
 
+# from pathlib import Path
 import tomli
 
 
@@ -11,14 +11,14 @@ def init_logging(config_file: str):
         except tomli.TOMLDecodeError as e:
             print(f"Error decoding {config_file}: {e}")
 
-    logging_config = config_data.get("tool", {}).get("LLMitless", {}).get("logging")
+    logging_config = config_data.get("tool", {}).get("llmitless", {}).get("logging")
 
     if logging_config:
-        for handler_config in logging_config.get("handlers", {}).values():
-            if 'filename' in handler_config:
-                log_file = Path(handler_config['filename'])
-                log_file.parent.mkdir(parents=True, exist_ok=True)
-                log_file.touch(exist_ok=True)
+        # for handler_config in logging_config.get("handlers", {}).values():
+        #     if 'filename' in handler_config:
+        #         log_file = Path(handler_config['filename'])
+        #         log_file.parent.mkdir(parents=True, exist_ok=True)
+        #         log_file.touch(exist_ok=True)
 
         logging.config.dictConfig(logging_config)
     else:
@@ -26,5 +26,5 @@ def init_logging(config_file: str):
         logging.log(logging.WARNING, f"No logging configuration found in {config_file}")
         print(f"No logging configuration found in {config_file}")
 
-    logger = logging.getLogger("LLMitless") #keep as package name for config propogation
+    logger = logging.getLogger("llmitless") #keep as package name for config propogation
     return logger
