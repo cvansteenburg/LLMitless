@@ -16,7 +16,7 @@ from langchain.schema.runnable import (
 from langchain_core.runnables import ConfigurableField
 
 from src.services.doc_operations import collapse_docs, count_tokens, split_list_of_docs
-from src.utils.callbacks import GetFinishReason, get_log_error_callback
+from src.utils.callbacks import GetFinishReason, LogChainError
 
 # UNCOMMENT FOR FAKE LLM
 # from langchain.chat_models import FakeListChatModel  # noqa: E402
@@ -275,7 +275,7 @@ async def map_reduce(
 
     attribute_configs.update(kwargs)
 
-    callbacks = [get_log_error_callback(),ConsoleCallbackHandler()]
+    callbacks = [LogChainError(), ConsoleCallbackHandler()]
 
     max_concurrency = max_concurrency
 

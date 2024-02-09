@@ -108,6 +108,8 @@ async def _summarize_sources(
                     except httpx.HTTPError as http_err:
                         # Handle HTTP errors from any LLM provider
                         logger.error(f"HTTP error occurred: {http_err}")
+                        if error_log.error_log:
+                            logger.error(f"Error during chain run: {error_log.error_log}")
                         return SummarizationResult(
                             result_status=ResultStatus.SERVER_ERROR,
                             summary=None,
@@ -117,6 +119,8 @@ async def _summarize_sources(
                     except Exception as general_err:
                         # Catch-all for other unexpected errors
                         logger.error(f"An unexpected error occurred: {general_err}")
+                        if error_log.error_log:
+                            logger.error(f"Error during chain run: {error_log.error_log}")
                         return SummarizationResult(
                             result_status=ResultStatus.SERVER_ERROR,
                             summary=None,
