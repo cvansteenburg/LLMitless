@@ -41,8 +41,6 @@ class SummarizationResult(BaseModel):
     usage_report: str | None = None
     debug: dict | None = None
 
-    class Config:
-        exclude_none = True
 
 
 @overload

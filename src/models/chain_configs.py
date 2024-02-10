@@ -5,7 +5,11 @@ from pydantic import BaseModel, Field
 
 # list at tiktoken.model -> MODEL_TO_ENCODING
 # https://platform.openai.com/docs/models/gpt-3-5
+# https://platform.openai.com/docs/models/continuous-model-upgrades
 class ModelList(StrEnum):
+    GPT_3_5_TURBO_LATEST = "gpt-3.5-turbo"
+    GPT_4_TURBO_LATEST = "gpt-4-turbo-preview"
+    GPT_4_LATEST = "gpt-4"
     GPT4 = "gpt-4"
     GPT4_32K = "gpt-4-32k"
     GPT_3_5_TURBO_1106 = "gpt-3.5-turbo-1106"
