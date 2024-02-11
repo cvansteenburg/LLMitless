@@ -5,7 +5,7 @@ from typing import Annotated
 
 import sentry_sdk
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 
 from src.models.chain_configs import (
     LLMConfigs,
@@ -18,7 +18,7 @@ from src.models.dataset_model import (
     sum_parser_selector,
 )
 from src.services.doc_operations import DocumentContents
-from src.services.summarize import SummarizationResult, _summarize_sources
+from src.services.summarize import ResultStatus, SummarizationResult, _summarize_sources
 from src.utils.client_auth import check_basic_auth
 from src.utils.file_operations import FileFilter, filter_files
 from src.utils.logging_init import init_logging
@@ -76,6 +76,8 @@ LLMApiKey = Annotated[
         description="API key for the LLM. Default LLM is OpenAI",
     ),
 ]
+
+# Create a header that allows me to toggle 
 
 
 @app.get("/")
@@ -156,6 +158,91 @@ async def summarize_from_disk(
         summarize_map_reduce,
         llm_config,
     )
+
+
+# Test endpoint mirror's "summarize" endpoint signature, returns deterministic SummarizationResult if well-formed "summarize" parameters are received
+@app.post(
+    "/summarize_test",
+    operation_id="summarize_test",
+    response_model_exclude_none=True,
+    description="Test endpoint that mirrors the 'summarize' endpoint signature, returns deterministic SummarizationResult if well-formed 'summarize' parameters are received.",
+)
+async def summarize_test(
+    api_key: LLMApiKey,
+    input_doc_format: InputDocFormat,
+    docs_to_summarize: list[DocumentContents],
+    preprocessor: PreprocessorConfig,
+    summarize_map_reduce: MapReduceConfigs,
+    llm_config: LLMConfigs,
+    auth: CheckBasicAuth,
+    reqeust: Request,
+    test_scenario: str | None = Query(None),
+) -> SummarizationResult:
+    """
+    Simulates various outcomes of a summarization request based on the test scenario provided.
+
+    This endpoint is designed for testing client-side handling of different API responses. By specifying a `test_scenario` query parameter, you can simulate various outcomes, such as successful summarization, server errors, or authentication failures. This allows client developers to test their code against predictable responses without triggering actual backend logic.
+
+    Parameters:
+    - test_scenario: Optional query parameter to specify the simulation scenario.
+
+    Returns:
+    - SummarizationResult: The simulated result of the summarization request, including status and optionally summary, usage report, and debug information.
+
+    Available scenarios include:
+    - "INAUTHENTICATED": Simulates an authentication failure response (note: this scenario is theoretical and might not be triggered as described).
+    - "INVALID_REQUEST": Simulates a response for an invalid request (note: like 'INAUTHENTICATED', this scenario is theoretical and might not behave as described due to FastAPI's validation mechanisms).
+    - "FORBIDDEN_CONTENT": Simulates a response for forbidden content.
+    - "SERVER_ERROR": Simulates a server error response.
+    - "SUCCESS_WITH_DUMMY_DATA": Returns a successful response with summary and dummy data for other fields.
+    - "SUCCESS_WITH_NONE": Returns a successful response with no summary or other data.
+    - "SUCCESS_WITH_SUMMARY_ONLY": Returns a successful response with a summary.
+    """
+    match test_scenario:
+        case "INAUTHENTICATED":
+            logger.error(f"INAUTHENTICATED TEST SUCCEEDED when it should have failed with request: {reqeust}")
+            return SummarizationResult(
+                result_status=ResultStatus.SUCCESS,
+                summary="WARNING - AUTH PASSED WHEN IT SHOULD HAVE FAILED."
+            )
+        case "INVALID_REQUEST":
+            logger.error(f"INVALID_REQUEST TEST SUCCEEDED when it should have failed with request: {reqeust}")
+            return SummarizationResult(
+                result_status=ResultStatus.SUCCESS,
+                summary="WARNING - REQUEST PASSED VALIDATION WHEN IT SHOULD HAVE FAILED."
+            )
+        case "FORBIDDEN_CONTENT":
+            return SummarizationResult(
+                result_status=ResultStatus.FORBIDDEN_CONTENT,
+                summary="Successful summarization output"
+            )
+        case "SERVER_ERROR":
+            return SummarizationResult(
+                result_status=ResultStatus.SERVER_ERROR
+            )
+        case "SUCCESS_WITH_DUMMY_DATA":
+            return SummarizationResult(
+                result_status=ResultStatus.SUCCESS,
+                summary="Successful summarization output",
+                usage_report="Dummy usage report",
+                debug={"key": "value"}
+            )
+        case "SUCCESS_WITH_NONE" | None:
+            return SummarizationResult(
+                result_status=ResultStatus.SUCCESS
+            )
+        case "SUCCESS_WITH_SUMMARY_ONLY":
+            return SummarizationResult(
+                result_status=ResultStatus.SUCCESS,
+                summary="Successful summarization output"
+            )
+        case _:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid test_scenario: {test_scenario}",
+            )
+# check each argument matches the expected type. If so, return a SummarizationResult. Otherwise, raise an exception. Do not call the summarization chain (we're just checking input and returning an output for the client integration test to handle).
+
 
 
 if __name__ == "__main__":
