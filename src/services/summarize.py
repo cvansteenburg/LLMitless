@@ -8,7 +8,7 @@ from typing import Callable, overload
 import httpx
 from fastapi import HTTPException, status
 from langchain.callbacks import get_openai_callback
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.chains.map_reduce import map_reduce
 from src.models.chain_configs import (
@@ -28,6 +28,7 @@ logger = getLogger(f"llmitless.{__name__}")
 
 MEMCHECK = os.getenv("MEMCHECK", False)
 
+
 class ResultStatus(StrEnum):
     SUCCESS = "SUCCESS"
     FORBIDDEN_CONTENT = "FORBIDDEN_CONTENT"
@@ -36,11 +37,29 @@ class ResultStatus(StrEnum):
 
 
 class SummarizationResult(BaseModel):
-    result_status: ResultStatus
-    summary: str | None = None
-    usage_report: str | None = None
-    debug: dict | None = None
+    result_status: ResultStatus = Field(
+        ...,
+        description="The result status of the summarization request. Note a request may be only partially successful and still return a result with a summary. Eg. An LLM run that stops early due to forbidden content will cause the status to show FORBIDDEN_CONTENT, even if the other runs were successful, and the resulting summary is well-formed.",
+    )
+    summary: str | None = Field(default=None, description="The summarized text.")
+    usage_report: str | None = Field(
+        default=None,
+        description="LLM cost and usage report, if available. This is enabled server-side, and if enabled, may vary by model. Example: 'Total Tokens: 3700\n\nPrompt Tokens: 3200\n\nCompletion Tokens: 500.\n\nTotal Cost (USD): $0.0351'",
+    )
+    debug: dict | None = Field(
+        default=None,
+        description="Extra debug information, if available. Used in self-hosted dev environments.",
+    )
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "result_status": "SUCCESS",
+                "summary": "Successful summarization output",
+                "usage_report": "Total Tokens: 3700\n\nPrompt Tokens: 3200\n\nCompletion Tokens: 500.\n\nTotal Cost (USD): $0.0351",
+                "debug": {"key": "value"},
+            }
+        }
 
 
 @overload
@@ -107,7 +126,9 @@ async def _summarize_sources(
                         # Handle HTTP errors from any LLM provider
                         logger.error(f"HTTP error occurred: {http_err}")
                         if error_log.error_log:
-                            logger.error(f"Error during chain run: {error_log.error_log}")
+                            logger.error(
+                                f"Error during chain run: {error_log.error_log}"
+                            )
                         return SummarizationResult(
                             result_status=ResultStatus.SERVER_ERROR,
                             summary=None,
@@ -118,7 +139,9 @@ async def _summarize_sources(
                         # Catch-all for other unexpected errors
                         logger.error(f"An unexpected error occurred: {general_err}")
                         if error_log.error_log:
-                            logger.error(f"Error during chain run: {error_log.error_log}")
+                            logger.error(
+                                f"Error during chain run: {error_log.error_log}"
+                            )
                         return SummarizationResult(
                             result_status=ResultStatus.SERVER_ERROR,
                             summary=None,
