@@ -52,7 +52,7 @@ class SummarizationResult(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "result_status": "SUCCESS",
                 "summary": "Successful summarization output",
