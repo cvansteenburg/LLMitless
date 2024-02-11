@@ -1,4 +1,5 @@
 import logging.config
+from pathlib import Path
 
 # from pathlib import Path
 import tomli
@@ -14,11 +15,11 @@ def init_logging(config_file: str):
     logging_config = config_data.get("tool", {}).get("llmitless", {}).get("logging")
 
     if logging_config:
-        # for handler_config in logging_config.get("handlers", {}).values():
-        #     if 'filename' in handler_config:
-        #         log_file = Path(handler_config['filename'])
-        #         log_file.parent.mkdir(parents=True, exist_ok=True)
-        #         log_file.touch(exist_ok=True)
+        for handler_config in logging_config.get("handlers", {}).values():
+            if 'filename' in handler_config:
+                log_file = Path(handler_config['filename'])
+                log_file.parent.mkdir(parents=True, exist_ok=True)
+                log_file.touch(exist_ok=True)
 
         logging.config.dictConfig(logging_config)
     else:
