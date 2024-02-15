@@ -18,10 +18,14 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+      
+      - name: Prepare environment variables file
+        run: |
+          cat <<EOF >.env
+          PYTHONTRACEMALLOC=${{ vars.PYTHONTRACEMALLOC }}
+          PYTHONASYNCIODEBUG=${{ vars.PYTHONASYNCIODEBUG }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}\
+          EOF
 
       - name: Build and test
-        env:
-            PYTHONTRACEMALLOC: ${{ env.PYTHONTRACEMALLOC }}
-            PYTHONASYNCIODEBUG: ${{ env.PYTHONASYNCIODEBUG }}
-            WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: docker compose -f docker/docker-compose.test-image.yml run llmitless_app

@@ -2,6 +2,8 @@
 # from pathlib import Path
 # from unittest.mock import patch
 
+import os
+
 import pytest
 
 # import time_machine
@@ -15,6 +17,8 @@ from src.utils.file_operations import (
 from tests import dataset_for_testing
 
 print(f"DATASET FOR TESTING: {dataset_for_testing.__path__}")
+
+print(f"TESTING ENV: {os.environ}")
 
 # test filter_files with tests/dataset_for_testing
 
