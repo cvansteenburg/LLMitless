@@ -24,7 +24,7 @@ jobs:
           cat <<EOF >.env
           PYTHONTRACEMALLOC=${{ vars.PYTHONTRACEMALLOC }}
           PYTHONASYNCIODEBUG=${{ vars.PYTHONASYNCIODEBUG }}
-          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}\
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
           EOF
 
       - name: Build and test
